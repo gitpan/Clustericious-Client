@@ -1,0 +1,48 @@
+---
+abstract: 'Constructor for clients of Clustericious apps.'
+author:
+  - 'Curt Tilmes <Curt.Tilmes@nasa.gov>'
+build_requires: {}
+configure_requires:
+  Module::Build: 0.4
+dynamic_config: 1
+generated_by: 'Module::Build version 0.4, CPAN::Meta::Converter version 2.120921'
+license: unknown
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Clustericious-Client
+provides:
+  Clustericious::Client:
+    file: lib/Clustericious/Client.pm
+    version: 0.64
+  Clustericious::Client::Command:
+    file: lib/Clustericious/Client/Command.pm
+    version: 0
+  Clustericious::Client::Meta:
+    file: lib/Clustericious/Client/Meta.pm
+    version: 0
+  Clustericious::Client::Meta::Route:
+    file: lib/Clustericious/Client/Meta/Route.pm
+    version: 0
+  Clustericious::Client::Object:
+    file: lib/Clustericious/Client/Object.pm
+    version: 0
+  Clustericious::Client::Object::DateTime:
+    file: lib/Clustericious/Client/Object/DateTime.pm
+    version: 0
+  Clustericious::Client::Object::Params:
+    file: lib/Clustericious/Client/Object/Params.pm
+    version: 0
+requires:
+  Clustericious::Config: 0.01
+  Data::Rmap: 0
+  DateTime::Format::ISO8601: 0
+  File::Temp: 0
+  IO::Prompt: 0
+  JSON::XS: 0
+  Log::Log4perl::CommandLine: 0
+  MojoX::Log::Log4perl: 0
+  Mojolicious: 1.65
+  Proc::Daemon: 0.05
+version: 0.64

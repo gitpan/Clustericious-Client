@@ -3,7 +3,7 @@ package Clustericious::Client;
 use strict; no strict 'refs';
 use warnings;
 
-our $VERSION = '0.64';
+our $VERSION = '0.65';
 
 =head1 NAME
 
@@ -93,7 +93,6 @@ use Clustericious::Client::Meta::Route;
 use MojoX::Log::Log4perl;
 use Log::Log4perl qw/:easy/;
 use File::Temp;
-use Proc::Daemon;
 
 =head1 ATTRIBUTES
 
@@ -200,7 +199,9 @@ sub new
         $self->client(Mojo::UserAgent->new);
         if (not length $self->server_url)
         {
-            $self->server_url($self->_config->url);
+            my $url = $self->_config->url;
+            $url =~ s{/$}{};
+            $self->server_url($url);
         }
     }
 
@@ -687,9 +688,9 @@ sub _get_user_pw  {
     my $realm = shift;
     return @{ $self->_cache->{$host}{$realm} } if exists($self->_cache->{$host}{$realm});
     # "use"ing causes too many warnings; load on demand.
-    require IO::Prompt;
-    my $user = IO::Prompt::prompt("Username for $realm at $host : ");
-    my $pw = IO::Prompt::prompt("Password : ",{-echo=>'*'});
+    require Term::Prompt;
+    my $user = Term::Prompt::prompt('x', "Username for $realm at $host : ", '', $ENV{USER} // $ENV{USERNAME});
+    my $pw = Term::Prompt::prompt('p', 'Password:', '', '');
     $self->_cache->{$host}{$realm} = [ $user, $pw ];
     return ($user,$pw);
 }
@@ -818,6 +819,7 @@ sub _start_ssh_tunnel {
 
     my $cmd = $self->_ssh_cmd;
     INFO "Executing $cmd";
+    require Proc::Daemon;
     my $proc = Proc::Daemon->new(
         exec_command => $cmd,
         pid_file     => $self->_ssh_pidfile,
@@ -842,6 +844,7 @@ Stop any running ssh tunnel for this client.
 
 sub stop_ssh_tunnel {
     my $self = shift;
+    require Proc::Daemon;
     my $proc = Proc::Daemon->new( pid_file => $self->_ssh_pidfile);
     WARN "pid file is ".$self->_ssh_pidfile;
     my $pid = $proc->Status($self->_ssh_pidfile) or do {
@@ -863,6 +866,14 @@ sub stop_ssh_tunnel {
 Set ACPS_SUPPRESS_404 to a regular expression in order to
 not print messages when a 404 response is returned from urls
 matching that regex.
+
+=head1 AUTHORS
+
+Brian Duggan
+
+Graham Ollis
+
+Curt Tilmes
 
 =head1 NOTES
 

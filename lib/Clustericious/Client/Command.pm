@@ -54,6 +54,7 @@ use Log::Log4perl qw/:easy/;
 use Scalar::Util qw/blessed/;
 use Data::Rmap qw/rmap_ref/;
 use File::Temp;
+use Getopt::Long qw/GetOptionsFromArray/;
 
 use Clustericious::Client::Meta;
 
@@ -142,12 +143,15 @@ sub _load_yaml {
 sub run {
     my $class = shift;
     my $client = shift;
+    my @args = @_ ? @_ : @ARGV;
+    our $TESTING;
 
-    return $class->_usage($client) if !$ARGV[0] || $ARGV[0] =~ /help/;
+    return $class->_usage($client) if !$args[0] || $args[0] =~ /help/;
 
+    # Preprocessing for any common args, e.g. --remote
     my $arg;
     ARG :
-    while ($arg = shift @_) {
+    while ($arg = shift @args) {
         for ($arg) {
             /--remote/ and do {
                 my $remote = shift;
@@ -164,16 +168,16 @@ sub run {
     # Map some alternative command line forms.
     my $try_stdin;
     if ( $method eq 'create' ) {
-        $method = shift @_ or $class->_usage( $client, "Missing <object>" );
+        $method = shift @args or $class->_usage( $client, "Missing <object>" );
         $try_stdin = 1;
     }
 
     if ( $method =~ /^(delete|search)$/ ) { # e.g. search -> app_search
-        $method = ( shift @_ ) . '_' . $method;
+        $method = ( shift @args ) . '_' . $method;
     }
 
     unless ($client->can($method)) {
-        $class->_usage($client, "Unrecognized arguments");
+        $class->_usage($client, "Unrecognized argument : $method");
         return;
     }
 
@@ -182,14 +186,88 @@ sub run {
         client_class => ref $client
     );
 
+    if (my $route_args = $meta->get("args")) {
+        my %req = map { $_->{required} ? ($_->{name} => 1):() } @$route_args;
+        my @getopt = map {
+             $_->{name}
+             .($_->{alt} ? "|$_->{alt}" : "")
+             .($_->{type} || '')
+             } @$route_args;
+        my %method_args;
+
+        my $doc = join "\n", "Valid options for '$method' are :",
+          map {
+             sprintf('  --%-20s%-15s%s', $_->{name}, $_->{required} ? 'required' : '', $_->{doc} || "" )
+           } @$route_args;
+
+        GetOptionsFromArray(\@args, \%method_args, @getopt) or LOGDIE "Invalid options. $doc\n";
+
+        LOGDIE "Unknown option : @args\n$doc\n" if @args;
+        for (@$route_args) {
+            my $name = $_->{name};
+            next unless $_->{required};
+            next if exists($method_args{$name});
+            LOGDIE "Missing value for required argument '$name'\n$doc\n";
+        }
+        for (@$route_args) {
+            my $name = $_->{name};
+            next unless $_->{preprocess};
+            LOGDIE "internal error: cannot handle $_->{preprocess}" unless $_->{preprocess} =~ /yamldoc|list/;
+            my $filename = $method_args{$name} or next;
+            LOGDIE "Argument for $name should be a filename, an arrayref or - for STDIN" if $filename && $filename =~ /\n/;
+            LOGDIE "Cannot read file $filename" unless $filename eq '-' || -e $filename;
+            for ($_->{preprocess}) {
+                /yamldoc/ and do {
+                    $method_args{$name} = ($filename eq "-" ? Load(join "",<STDIN>) : LoadFile($filename))
+                            or LOGDIE "Error parsing yaml in ($filename)";
+                    next;
+                };
+                /list/ and do {
+                    $method_args{$name} = [ map { chomp; $_ } IO::File->new("< $filename")->getlines ];
+                    next;
+                };
+            }
+        }
+
+        # run
+        my $obj = $client->$method(%method_args);
+
+        ERROR $client->errorstring if $client->errorstring;
+
+        # Copied from below, until that code is deprecated.
+        if ( blessed($obj) && $obj->isa("Mojo::Transaction") ) {
+            if ( my $res = $obj->success ) {
+                print $res->code," ",$res->default_message,"\n";
+            } else {
+                my ( $message, $code ) = $obj->error;
+                ERROR $code if $code;
+                ERROR $message;
+            }
+        } elsif (ref $obj eq 'HASH' && keys %$obj == 1 && $obj->{text}) {
+            print $obj->{text};
+        } elsif ($client->tx && $client->tx->req->method eq 'POST' && $meta->get("quiet_post")) {
+            my $msg = $client->res->code." ".$client->res->default_message;
+            my $got = $client->res->json;
+            if ($got && ref $got eq 'HASH' and keys %$got==1 && $got->{text}) {
+                $msg .= " ($got->{text})";
+            }
+            INFO $msg;
+        } else {
+           print _prettyDump($obj) unless $TESTING;
+        }
+        return;
+    }
+
+    # Code below here should be deprecated.
+
     my @extra_args = ( '/dev/null' );
     my $have_filenames;
 
     # Assume we have files and/or remote globs
-    if ( !$meta->get('dont_read_files') && @_ > 0 && ( -r $_[-1] || $_[-1] =~ /^\S+:/ ) ) {
+    if ( !$meta->get('dont_read_files') && @args > 0 && ( -r $_[-1] || $_[-1] =~ /^\S+:/ ) ) {
         $have_filenames = 1;
         @extra_args = ();
-        while (my $arg = pop @_) {
+        while (my $arg = pop @args) {
             if ($arg =~ /^\S+:/) {
                 push @extra_args, _expand_remote_glob($arg);
             } elsif (-e $arg) {
@@ -198,20 +276,20 @@ sub run {
                 LOGDIE "Do not know how to interpret argument : $arg";
             }
         }
-    } elsif ( $try_stdin && (-r STDIN) && @_==0) {
+    } elsif ( $try_stdin && (-r STDIN) && @args==0) {
         my $content = join '', <STDIN>;
         $content = Load($content);
         LOGDIE "Invalid yaml content in $method" unless $content;
-        push @_, $content;
+        push @args, $content;
     }
 
     # Finally, run :
     for my $arg (@extra_args) {
         my $obj;
         if ($have_filenames) {
-            $obj = $client->$method(@_, _load_yaml($arg));
+            $obj = $client->$method(@args, _load_yaml($arg));
         } else {
-            $obj = $client->$method(@_);
+            $obj = $client->$method(@args);
         }
         ERROR $client->errorstring if $client->errorstring;
         next unless $obj;
@@ -226,7 +304,7 @@ sub run {
             }
         } elsif (ref $obj eq 'HASH' && keys %$obj == 1 && $obj->{text}) {
             print $obj->{text};
-        } elsif ($client->tx->req->method eq 'POST' && $meta->get("quiet_post")) {
+        } elsif ($client->tx && $client->tx->req->method eq 'POST' && $meta->get("quiet_post")) {
             my $msg = $client->res->code." ".$client->res->default_message;
             my $got = $client->res->json;
             if ($got && ref $got eq 'HASH' and keys %$got==1 && $got->{text}) {

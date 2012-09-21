@@ -15,7 +15,7 @@ name: Clustericious-Client
 provides:
   Clustericious::Client:
     file: lib/Clustericious/Client.pm
-    version: 0.65
+    version: 0.66
   Clustericious::Client::Command:
     file: lib/Clustericious/Client/Command.pm
     version: 0
@@ -45,4 +45,4 @@ requires:
   Mojolicious: 1.65
   Proc::Daemon: 0.05
   Term::Prompt: 0
-version: 0.65
+version: 0.66

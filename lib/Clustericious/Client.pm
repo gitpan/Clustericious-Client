@@ -3,7 +3,7 @@ package Clustericious::Client;
 use strict; no strict 'refs';
 use warnings;
 
-our $VERSION = '0.65';
+our $VERSION = '0.66';
 
 =head1 NAME
 
@@ -12,28 +12,41 @@ Clustericious::Client - Constructor for clients of Clustericious apps.
 =head1 SYNOPSIS
 
  package Foo::Client;
-
  use Clustericious::Client;
 
  route 'welcome' => '/';                   # GET /
-
  route status;                             # GET /status
-
  route myobj => [ 'MyObject' ];            # GET /myobj
-
  route something => GET => '/some/';
-
  route remove => DELETE => '/something/';
 
  object 'obj';                             # Defaults to /obj
-
  object 'foo' => '/something/foo';         # Can override the URL
 
  route status => \"Get the status";        # Scalar refs are documentation
-
  route_doc status => "Get the status";     # or you can use route_doc
+ route_args status => [                    # route_args sets method or cli arguments
+            {
+                name     => 'full',
+                type     => '=s',
+                required => 0,
+                doc      => 'get a full status',
+            },
+        ];
 
- route_meta status => { auto_failover => 1 } # route_meta sets attributes of routes
+ route_args wrinkle => [                   # methods correspond to "route"s
+     {
+         name => 'time'
+     }
+ ];
+
+ sub wrinkle {                             # provides cli command as well as a method
+    my $c = shift;
+    my %args = @_;
+    if ($args{time}) {
+            ...
+    }
+ }
 
  ----------------------------------------------------------------------
 
@@ -44,25 +57,28 @@ Clustericious::Client - Constructor for clients of Clustericious apps.
  my $f = Foo::Client->new(app => 'MyApp'); # For testing...
 
  my $welcome = $f->welcome();              # GET /
-
  my $status = $f->status();                # GET /status
-
  my $myobj = $f->myobj('key');             # GET /myobj/key, MyObject->new()
-
  my $something = $f->something('this');    # GET /some/this
-
  $f->remove('foo');                        # DELETE /something/foo
 
  my $obj = $f->obj('this', 27);            # GET /obj/this/27
  # Returns either 'Foo::Client::Obj' or 'Clustericious::Client::Object'
 
  $f->obj({ set => 'this' });               # POST /obj
-
  $f->obj('this', 27, { set => 'this' });   # POST /obj/this/27
-
  $f->obj_delete('this', 27);               # DELETE /obj/this/27
-
  my $obj = $f->foo('this');                # GET /something/foo/this
+
+ $f->status(full => "yes");
+ $f->wrinkle( time => 1 ); 
+
+ ----------------------
+
+ #!/bin/sh
+ fooclient status
+ fooclient status --full yes
+ fooclient wrinkle --time
 
 =head1 DESCRIPTION
 
@@ -99,23 +115,21 @@ use File::Temp;
 This class inherits from L<Mojo::Base>, and handles attributes like
 that class.  The following additional attributes are used.
 
-=over
-
-=item C<client>
+=head2 client
 
 A client to process the HTTP stuff with.  Defaults to a
 L<Mojo::UserAgent>.
 
-=item C<app>
+=head2 app
 
 For testing, you can specify a Mojolicious app name.
 
-=item C<server_url>
+=head2 server_url
 
 You can override the URL prefix for the client, otherwise it
 will look it up in the config file.
 
-=item C<res>
+=head2 res
 
 After an HTTP error, the built methods return undef.  This function
 will return the L<Mojo::Message::Response> from the server.
@@ -139,6 +153,7 @@ sub import
     push @{"${caller}::ISA"}, $class unless $caller->isa($class);
     *{"${caller}::route"} = \&route;
     *{"${caller}::route_meta"} = \&route_meta;
+    *{"${caller}::route_args"} = \&route_args;
     *{"${caller}::route_doc"} = sub {
         Clustericious::Client::Meta->add_route( $caller, @_ )
     };
@@ -147,13 +162,9 @@ sub import
     }
 }
 
-=back
-
 =head1 METHODS
 
-=over
-
-=item C<new>
+=head2 new
 
  my $f = Foo::Client->new();
  my $f = Foo::Client->new(server_url => 'http://someurl');
@@ -214,19 +225,19 @@ sub new
     return $self;
 }
 
-=item tx
+=head2 tx
 
 The most recent HTTP::Transaction.
 
 =cut
 
-=item userinfo
+=head2 userinfo
 
 Credentials currently stored.
 
 =cut
 
-=item remote
+=head2 remote
 
 Tell the client to use the remote information in the configuration.
 For instance, if the config has
@@ -261,7 +272,7 @@ sub remote {
     $self->_remote($remote);
 }
 
-=item remotes
+=head2 remotes
 
 Return a list of available remotes.
 
@@ -273,7 +284,7 @@ sub remotes {
     return keys %found;
 }
 
-=item C<login>
+=head2 login
 
 Log in to the server.  This will send basic auth info
 along with every subsequent request.
@@ -294,7 +305,7 @@ sub login {
     $self->userinfo(join ':', $user,$pw);
 }
 
-=item C<errorstring>
+=head2 errorstring
 
 After an error, this returns an error string made up of the server
 error code and message.  (use res->code and res->message to get the
@@ -314,13 +325,9 @@ sub errorstring
       || sprintf( "(%d) %s", $self->res->code, $self->res->message );
 }
 
-=back
-
 =head1 FUNCTIONS
 
-=over
-
-=item C<route>
+=head2 route
 
  route 'subname';                    # GET /subname
  route subname => '/url';            # GET /url
@@ -386,7 +393,7 @@ sub route
 
 }
 
-=item route_meta
+=head2 route_meta
 
 Set metadata attributes for this route.
 
@@ -407,7 +414,81 @@ sub route_meta {
     $meta->set($_ => $attrs->{$_}) for keys %$attrs;
 }
 
-=item C<object>
+=head2 route_args
+
+Set arguments for this route.  This allows command line options
+to be automatically transformed into method arguments.  route_args
+associates an array ref with the name of a route.  Each entry
+in the array ref is a hashref which may have keys as shown
+in this example :
+
+  route_args send => [
+            {
+                name     => 'what',              # name of the route
+                type     => '=s',                # type (see L<Getopt::Long>)
+                alt      => 'long|extra|big',    # alternative names
+                required => 0,                   # Is it required?
+                doc      => 'get a full status', # brief documentation
+            },
+            {
+                name     => 'items',               # name of the route
+                type     => '=s',                  # type (see L<Getopt::Long>)
+                doc      => 'send a list of items' # brief docs
+                preprocess => 'list'               # make an array ref from a list
+            },
+        ];
+
+The keys have the following effect :
+
+=over
+
+=item name
+
+The name of the option.  This should be preceded by two dashes
+on the command line.  It is also sent as the named argument to the
+method call.
+
+=item type
+
+A type, as described in L<Getopt::Long>.  This will be appended to
+the name to form the option specification.
+
+=item alt
+
+An alternative name or names (joined by |).
+
+=item required
+
+If this arg is required, set this to 1.
+
+=item doc
+
+A brief description to be printed in error messages and help documenation.
+
+=item preprocess
+
+Can be either 'yamldoc' or 'list'.  In both cases, the argument is expected
+to refer to either a filename which exists, or else "-" for STDIN.  The contents
+are then transformed from YAML (for yamldoc), or split on carriage returns (for list)
+to form either a data structure or an arrayref, respectively.
+
+=back
+
+=cut
+
+sub route_args {
+    my $name = shift;
+    my $args = shift;
+    die "args must be an array ref" unless ref $args eq 'ARRAY';
+    my $meta = Clustericious::Client::Meta::Route->new(
+        client_class => scalar caller(),
+        route_name   => $name
+    );
+
+    $meta->set(args => $args);
+}
+
+=head2 object
 
  object 'objname';                   # defaults to URL /objname
  object objname => '/some/url';
@@ -466,6 +547,7 @@ sub object {
             client_class => $caller,
             route_name   => $objname.'_delete',
         );
+        $meta->set(dont_read_files => 1);
         shift->_doit( $meta, DELETE => $url, @_ );
     };
     *{"${caller}::${objname}_search"} = sub {
@@ -473,6 +555,7 @@ sub object {
             client_class => $caller,
             route_name   => $objname.'_search'
         );
+        $meta->set(dont_read_files => 1);
         shift->_doit( $meta, POST => "$url/search", @_ );
     };
 }
@@ -695,7 +778,7 @@ sub _get_user_pw  {
     return ($user,$pw);
 }
 
-=item meta_for
+=head2 meta_for
 
 Get the metadata for a route.
 
@@ -714,8 +797,6 @@ sub meta_for {
     );
 }
 
-=back
-
 =head1 COMMON ROUTES
 
 These are routes that are automatically supported by all clients.
@@ -723,9 +804,7 @@ See L<Clustericious::RouteBuilder::Common>.  Each of these
 must also be in L<Clustericious::Client::Meta> for there
 to be documentation.
 
-=over
-
-=item version
+=head2 version
 
 Retrieve the version on the server.
 
@@ -738,7 +817,7 @@ sub version {
     $self->_doit($meta, GET => '/version');
 }
 
-=item status
+=head2 status
 
 Retrieve the status from the server.
 
@@ -751,7 +830,7 @@ sub status {
     $self->_doit($meta, GET => '/status');
 }
 
-=item api
+=head2 api
 
 Retrieve the API from the server
 
@@ -764,7 +843,7 @@ sub api {
     $self->_doit( $meta, GET => '/api' );
 }
 
-=item logtail
+=head2 logtail
 
 Get the last N lines of the server log file.
 
@@ -780,7 +859,7 @@ sub _ssh_pidfile {
     sprintf("%s/%s_acps_ssh.pid",($ENV{TMPDIR} || "/tmp"),shift->_appname);
 }
 
-=item ssh_tunnel_is_up
+=head2 ssh_tunnel_is_up
 
 Check to see if an ssh tunnel is alive for the current client.
 
@@ -836,7 +915,7 @@ sub _start_ssh_tunnel {
     DEBUG "new ssh pid is $pid";
 }
 
-=item stop_ssh_tunnel
+=head2 stop_ssh_tunnel
 
 Stop any running ssh tunnel for this client.
 
@@ -858,8 +937,6 @@ sub stop_ssh_tunnel {
     DEBUG "Killed ssh for ".(ref $self)." ($killed)";
     return 1;
 }
-
-=back
 
 =head1 ENVIRONMENT
 

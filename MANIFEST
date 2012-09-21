@@ -11,6 +11,7 @@ MANIFEST			This list of files
 MANIFEST.SKIP
 META.json
 META.yml
+t/args.t
 t/basic.t
 t/client.t
 t/datetime.t

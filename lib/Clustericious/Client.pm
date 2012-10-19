@@ -3,96 +3,77 @@ package Clustericious::Client;
 use strict; no strict 'refs';
 use warnings;
 
-our $VERSION = '0.66';
+our $VERSION = '0.67';
 
 =head1 NAME
 
-Clustericious::Client - Constructor for clients of Clustericious apps.
+Clustericious::Client - Construct command line and perl clients for RESTful services.
 
 =head1 SYNOPSIS
 
- package Foo::Client;
- use Clustericious::Client;
+tracks.pm :
 
- route 'welcome' => '/';                   # GET /
- route status;                             # GET /status
- route myobj => [ 'MyObject' ];            # GET /myobj
- route something => GET => '/some/';
- route remove => DELETE => '/something/';
+    package Tracks;
+    use Clustericious::Client;
 
- object 'obj';                             # Defaults to /obj
- object 'foo' => '/something/foo';         # Can override the URL
+    route 'mixes' => '/mixes.json';
+    route_doc mixes => 'Get a list of mixes.';
+    route_args mixes => [
+        { name => 'api_key', type => '=s', modifies_url => "query", required => 1 },
+        { name => 'per_page',type => '=i', modifies_url => "query", },
+        { name => 'tags',    type => '=s', modifies_url => "query" },
+    ];
 
- route status => \"Get the status";        # Scalar refs are documentation
- route_doc status => "Get the status";     # or you can use route_doc
- route_args status => [                    # route_args sets method or cli arguments
-            {
-                name     => 'full',
-                type     => '=s',
-                required => 0,
-                doc      => 'get a full status',
-            },
-        ];
+tracks.pl :
 
- route_args wrinkle => [                   # methods correspond to "route"s
-     {
-         name => 'time'
-     }
- ];
+    #!/usr/bin/env perl
 
- sub wrinkle {                             # provides cli command as well as a method
-    my $c = shift;
-    my %args = @_;
-    if ($args{time}) {
-            ...
-    }
- }
+    use lib '.';
+    use Log::Log4perl qw/:easy/;
+    Log::Log4perl->easy_init($TRACE);
+    use tracks;
 
- ----------------------------------------------------------------------
+    my $t = Tracks->new(server_url => 'http://8tracks.com' );
+    my $mixes = $t->mixes(
+         tags => 'jazz',
+         api_key => $api_key,
+         per_page => 2,
+         ) or die $t->errorstring;
+    print "Mix : $_->{name}\n" for @{ $mixes->{mixes} };
 
- use Foo::Client;
+tracks_cli :
 
- my $f = Foo::Client->new();
- my $f = Foo::Client->new(server_url => 'http://someurl');
- my $f = Foo::Client->new(app => 'MyApp'); # For testing...
+    #!/usr/bin/env perl
 
- my $welcome = $f->welcome();              # GET /
- my $status = $f->status();                # GET /status
- my $myobj = $f->myobj('key');             # GET /myobj/key, MyObject->new()
- my $something = $f->something('this');    # GET /some/this
- $f->remove('foo');                        # DELETE /something/foo
+    use lib '.';
+    use Clustericious::Client::Command;
+    use tracks;
 
- my $obj = $f->obj('this', 27);            # GET /obj/this/27
- # Returns either 'Foo::Client::Obj' or 'Clustericious::Client::Object'
+    use Log::Log4perl qw/:easy/;
+    Log::Log4perl->easy_init($TRACE);
 
- $f->obj({ set => 'this' });               # POST /obj
- $f->obj('this', 27, { set => 'this' });   # POST /obj/this/27
- $f->obj_delete('this', 27);               # DELETE /obj/this/27
- my $obj = $f->foo('this');                # GET /something/foo/this
+    Clustericious::Client::Command->run(Tracks->new, @ARGV);
 
- $f->status(full => "yes");
- $f->wrinkle( time => 1 ); 
+~/etc/Tracks.conf :
 
- ----------------------
+    ---
+    url : 'http://8tracks.com'
 
- #!/bin/sh
- fooclient status
- fooclient status --full yes
- fooclient wrinkle --time
+From the command line :
+
+    $ perl tracks.pl
+    $ tracks_cli mixes --api_key foo --tags jazz
 
 =head1 DESCRIPTION
 
-Some very simple helper functions with a clean syntax to build a REST
-type client suitable for Clustericious applications.
+Clustericious::Client is library for construction clients for RESTful
+services.  It provides a mapping between command line arguments, method
+arguments, and URLs.
 
 The builder functions add methods to the client object that translate
 into basic REST functions.  All of the 'built' methods return undef on
 failure of the REST/HTTP call, and auto-decode the returned body into
 a data structure if it is application/json.
-
-Using Clustericious::Client also allows for easy creation of both
-perl APIs and command line clients for a L<Clustericious> server.
-See L<Clustericious::Client::Command>.
 
 =cut
 
@@ -129,12 +110,14 @@ For testing, you can specify a Mojolicious app name.
 You can override the URL prefix for the client, otherwise it
 will look it up in the config file.
 
-=head2 res
+=head2 res, tx
 
 After an HTTP error, the built methods return undef.  This function
 will return the L<Mojo::Message::Response> from the server.
 
 res->code and res->message are the returned HTTP code and message.
+
+tx has the Mojo::Transaction::HTTP object.
 
 =cut
 
@@ -224,12 +207,6 @@ sub new
 
     return $self;
 }
-
-=head2 tx
-
-The most recent HTTP::Transaction.
-
-=cut
 
 =head2 userinfo
 
@@ -336,26 +313,27 @@ sub errorstring
  route subname => DELETE => '/url';  # DELETE /url
  route subname => ['SomeObjectClass'];
  route subname \"<documentation> <for> <some> <args>";
+ route_args subname => [ { name => 'param', type => "=s", modifies_url => 'query' } ]
+ route_args subname => [ { name => 'param', type => "=i", modifies_url => 'append' } ]
 
-Makes a method subname() that does the REST action.  Any scalar
-arguments are tacked onto the end of the url separated by a slash.
-If any argument begins with "--", it and its successor are treated
-as part of URL query string (for a GET request).  If any argument
-begins with a single "-", it and it successor are treated as HTTP
-headers to send (for a GET request).  If you pass a hash
-reference, the method changes to POST and the hash is encoded into
-the body as application/json.
+Makes a method subname() that does the REST action.
 
-A hash reference after a POST method becomes headers.
+ route subname => $url => $doc
 
-A scalar reference as the final argument adds documentation
-about this route which will be displayed by the command-line
-client.
+is equivalent to
+
+ route      subname => $url
+ route_args subname => [ { name => 'all', positional => 'many', modifies_url => 'append' } ];
+ route_doc  subname => $$doc
+
+with the additional differences that GET becomes a POST if the argument is
+a hashref, and heuristics are used to read YAML files and STDIN.
+
+See route_args and route_doc below.
 
 =cut
 
-sub route
-{
+sub route {
     my $subname = shift;
     my $objclass = ref $_[0] eq 'ARRAY' ? shift->[0] : undef;
     my $doc      = ref $_[-1] eq 'SCALAR' ? ${ pop() } : "";
@@ -370,25 +348,22 @@ sub route
 
     $meta->set_doc($doc);
 
-    if ($objclass)
-    {
+    if ($objclass) {
         eval "require $objclass";
         if ($@) {
             LOGDIE "Error loading $objclass : $@" unless $@ =~ /Can't locate/i;
         }
-
-        no strict 'refs';
-        *{caller() . "::$subname"} =
-        sub
-        {
-            my $self = shift;
-            $objclass->new($self->_doit($meta,$method,$url,@_), $self);
-        };
     }
-    else
+
     {
         no strict 'refs';
-        *{caller() . "::$subname"} = sub { shift->_doit($meta,$method,$url,@_); };
+        *{caller() . "::$subname"} = sub {
+            my $self = shift;
+            my @args = $self->meta_for->process_args(@_);
+            my $got = $self->_doit($meta,$method,$url,@args);
+            return $objclass->new($got, $self) if $objclass;
+            return $got;
+        };
     }
 
 }
@@ -417,10 +392,10 @@ sub route_meta {
 =head2 route_args
 
 Set arguments for this route.  This allows command line options
-to be automatically transformed into method arguments.  route_args
-associates an array ref with the name of a route.  Each entry
-in the array ref is a hashref which may have keys as shown
-in this example :
+to be transformed into method arguments, and allows normalization
+and validation of method arguements.  route_args associates an array
+ref with the name of a route.  Each entry in the array ref is a hashref
+which may have keys as shown in this example :
 
   route_args send => [
             {
@@ -467,10 +442,62 @@ A brief description to be printed in error messages and help documenation.
 
 =item preprocess
 
-Can be either 'yamldoc' or 'list'.  In both cases, the argument is expected
+Can be either 'yamldoc', 'list' or 'datetime'.
+
+For yamldoc and list, the argument is expected
 to refer to either a filename which exists, or else "-" for STDIN.  The contents
 are then transformed from YAML (for yamldoc), or split on carriage returns (for list)
 to form either a data structure or an arrayref, respectively.
+
+For datetime the string is run through Date::Parse and turned into an ISO 8601 datetime.
+
+=item modifies_url
+
+Describes how the URL is affected by the arguments.  Can be
+'query', 'append', or a code reference.
+
+'query' adds to the query string, e.g.
+
+    route subname '/url'
+    route_args subname => [ { name => 'foo', type => "=s", modifies_url => 'query' } ]
+
+This wlll cause this invocation :
+
+    $foo->subname( "foo" => "bar" )
+
+to send a GET request to /url?foo=bar.
+
+Similarly, 'append' is equivalent to
+
+    sub { my ($u,$v) = @_; push @{ $u->path->parts } , $v }
+
+i.e. append the parameter to the end of the URL path.
+
+If route_args is omitted for a route, then arguments with a '--'
+are treated as part of the query string, and arguments with a '-'
+are treated as HTTP headers (for a GET request).  If a hash
+reference is passed, the method changes to POST and the hash is
+encoded into the body as application/json.
+
+=item positional
+
+Can be 'one' or 'many'.
+
+If set, this is a positional param, not a named param.  i.e.
+getopt will not be used to parse the command line, and
+it will be take from a list sent to the method.  For instance
+
+  route_args subname => [ { name => 'id', positional => 'one' } ];
+
+Then
+
+  $client->subname($id)
+
+or
+
+ commandlineclient subname id
+
+If set to 'many', all occurences will be added to the url.
 
 =back
 
@@ -583,41 +610,52 @@ sub _doit {
 
     $url = Mojo::URL->new($url) unless ref $url;
     my $parameters = $url->query;
-    while (defined(my $arg = shift @args))
-    {
+    my %url_modifier;
+    my %gen_url_modifier = (
+        query => sub { my $name = shift;  sub { my ($u,$v) = @_; $u->query({$name => $v}) }  },
+        append => sub { my $name = shift; sub { my ($u,$v) = @_; push @{ $u->path->parts } , $v } },
+    );
+    if ($meta && (my $arg_spec = $meta->get('args'))) {
+        for (@$arg_spec) {
+            my $modifies_url = $_->{modifies_url} or next;
+            if (ref ($modifies_url) eq 'CODE') {
+                $url_modifier{$_->{name}} = $modifies_url;
+            } elsif (my $gen = $gen_url_modifier{$modifies_url}) {
+                $url_modifier{$_->{name}} = $gen->($_->{name});
+            } else  {
+                die "don't understand how to interepret modifies_url=$modifies_url";
+            }
+        }
+    }
+    while (defined(my $arg = shift @args)) {
         if (ref $arg eq 'HASH') {
             $method = 'POST';
             $parameters->append(skip_existing => 1) if $meta && $meta->get("skip_existing");
             $body = encode_json $arg;
             $headers = { 'Content-Type' => 'application/json' };
-        }
-        elsif (ref $arg eq 'CODE')
-        {
+        } elsif (ref $arg eq 'CODE') {
             $cb = $self->_mycallback($arg);
-        }
-        elsif ($method eq "GET" && $arg =~ s/^--//) {
+        } elsif (my $code = $url_modifier{$arg}) {
+            $url = $code->($url, shift @args);
+        } elsif ($method eq "GET" && $arg =~ s/^--//) {
             my $value = shift @args;
             $parameters->append($arg => $value);
-        }
-        elsif ($method eq "GET" && $arg =~ s/^-//) {
+        } elsif ($method eq "GET" && $arg =~ s/^-//) {
             # example: $client->esdt(-range => [1 => 100]);
             my $value = shift @args;
             if (ref $value eq 'ARRAY') {
                 $value = "items=$value->[0]-$value->[1]";
             }
             $headers->{$arg} = $value;
-        }
-        elsif ($method eq "POST" && !ref $arg) {
+        } elsif ($method eq "POST" && !ref $arg) {
             $body = $arg;
             $headers = shift @args if $args[0] && ref $args[0] eq 'HASH';
-        }
-        else
-        {
+        } else {
             push @{ $url->path->parts }, $arg;
         }
     }
     $url = $url->to_abs unless $url->is_abs;
-    WARN "url $url is not absolute" unless $url =~ /^http/i;
+    WARN "url $url is not absolute" unless $url =~ /^http/i || $ENV{HARNESS_ACTIVE};
 
     $url->userinfo($self->userinfo) if $self->userinfo;
 
@@ -633,9 +671,11 @@ sub _doit {
     $self->res($res);
     $self->tx($tx);
 
-    if (($tx->res->code||0) == 401 && !$url->userinfo && ($self->_has_auth || $self->_can_auth)) {
+    my $auth_header;
+    if (($tx->res->code||0) == 401 && ($auth_header = $tx->res->headers->www_authenticate)
+        && !$url->userinfo && ($self->_has_auth || $self->_can_auth)) {
         DEBUG "received code 401, trying again with credentials";
-        my ($realm) = $tx->res->headers->www_authenticate =~ /realm=(.*)$/i;
+        my ($realm) = $auth_header =~ /realm=(.*)$/i;
         my $host = $url->host;
         $self->login( $self->_has_auth ? () : $self->_get_user_pw($host,$realm) );
         return $self->_doit($meta ? $meta : (), @_);
@@ -648,7 +688,7 @@ sub _doit {
             "text/plain";
         };
         return $method =~ /HEAD|DELETE/       ? 1
-            : $content_type eq 'application/json' ? decode_json($res->body)
+            : $content_type =~ qr[application/json] ? decode_json($res->body)
             : $res->body;
     }
 
@@ -708,7 +748,7 @@ sub _mycallback
 
         if ($tx->res->is_status_class(200))
         {
-            my $body = $tx->res->headers->content_type eq 'application/json'
+            my $body = $tx->res->headers->content_type =~ qr[application/json]
                 ? decode_json($tx->res->body) : $tx->res->body;
 
             $cb->($body ? $body : 1);
@@ -790,7 +830,10 @@ Returns a Clustericious::Client::Meta::Route object.
 
 sub meta_for {
     my $self = shift;
-    my $route_name = shift;
+    my $route_name = shift || [ caller 1 ]->[3];
+    if ( $route_name =~ /::([^:]+)$/ ){
+        $route_name = $1;
+    }
     my $meta = Clustericious::Client::Meta::Route->new(
         route_name   => $route_name,
         client_class => ref $self
@@ -800,9 +843,7 @@ sub meta_for {
 =head1 COMMON ROUTES
 
 These are routes that are automatically supported by all clients.
-See L<Clustericious::RouteBuilder::Common>.  Each of these
-must also be in L<Clustericious::Client::Meta> for there
-to be documentation.
+See L<Clustericious::RouteBuilder::Common>.
 
 =head2 version
 
@@ -938,11 +979,80 @@ sub stop_ssh_tunnel {
     return 1;
 }
 
-=head1 ENVIRONMENT
+=head1 EXAMPLES
 
-Set ACPS_SUPPRESS_404 to a regular expression in order to
-not print messages when a 404 response is returned from urls
-matching that regex.
+ package Foo::Client;
+ use Clustericious::Client;
+
+ route 'welcome' => '/';                   # GET /
+ route status;                             # GET /status
+ route myobj => [ 'MyObject' ];            # GET /myobj
+ route something => GET => '/some/';
+ route remove => DELETE => '/something/';
+
+ object 'obj';                             # Defaults to /obj
+ object 'foo' => '/something/foo';         # Can override the URL
+
+ route status => \"Get the status";        # Scalar refs are documentation
+ route_doc status => "Get the status";     # or you can use route_doc
+ route_args status => [                    # route_args sets method or cli arguments
+            {
+                name     => 'full',
+                type     => '=s',
+                required => 0,
+                doc      => 'get a full status',
+            },
+        ];
+
+ route_args wrinkle => [                   # methods correspond to "route"s
+     {
+         name => 'time'
+     }
+ ];
+
+ sub wrinkle {                             # provides cli command as well as a method
+    my $c = shift;
+    my %args = @_;
+    if ($args{time}) {
+            ...
+    }
+ }
+
+ ----------------------------------------------------------------------
+
+ use Foo::Client;
+
+ my $f = Foo::Client->new();
+ my $f = Foo::Client->new(server_url => 'http://someurl');
+ my $f = Foo::Client->new(app => 'MyApp'); # For testing...
+
+ my $welcome = $f->welcome();              # GET /
+ my $status = $f->status();                # GET /status
+ my $myobj = $f->myobj('key');             # GET /myobj/key, MyObject->new()
+ my $something = $f->something('this');    # GET /some/this
+ $f->remove('foo');                        # DELETE /something/foo
+
+ my $obj = $f->obj('this', 27);            # GET /obj/this/27
+ # Returns either 'Foo::Client::Obj' or 'Clustericious::Client::Object'
+
+ $f->obj({ set => 'this' });               # POST /obj
+ $f->obj('this', 27, { set => 'this' });   # POST /obj/this/27
+ $f->obj_delete('this', 27);               # DELETE /obj/this/27
+ my $obj = $f->foo('this');                # GET /something/foo/this
+
+ $f->status(full => "yes");
+ $f->wrinkle( time => 1 ); 
+
+ ----------------------
+
+ #!/bin/sh
+ fooclient status
+ fooclient status --full yes
+ fooclient wrinkle --time
+
+=head1 SEE ALSO
+
+L<Clustericious::Config>, L<Clustericious>, L<Mojolicious>
 
 =head1 AUTHORS
 

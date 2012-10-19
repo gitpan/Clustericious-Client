@@ -33,24 +33,31 @@ route_args 'fry' => [
     { name => 'things', type => '=s', preprocess => 'list' },
 ];
 
+# TODO ensure no { command_line => 1 } if no route_args.
 our $argsWeGot;
 sub put {
     my $self = shift;
-    my %args = @_;
+    my %args = $self->meta_for->process_args(@_);
     $argsWeGot = [ got => \%args ];
     return [ got => \%args ];
 }
 sub eat {
     my $self = shift;
-    my %args = @_;
+    my %args = $self->meta_for->process_args(@_);
     $argsWeGot = [ got => \%args ];
     return [ got => \%args ];
 }
 sub fry {
     my $self = shift;
-    my %args = @_;
+    my %args = $self->meta_for->process_args(@_);
     $argsWeGot = [ got => \%args ];
     return [ got => \%args ];
+}
+sub legacy {
+    my $self = shift;
+    my @args = @_;
+    $argsWeGot = [ got => \@args ];
+    return [ got => \@args ];
 }
 
 package main;
@@ -76,10 +83,17 @@ ok $client->can('put'),  'can put';
 my $ret;
 
 $ret = $client->put(where => "in the oven", for => "baby and me");
-is_deeply($ret, [ got => {where => "in the oven", for => "baby and me"}], 'got args back' );
+is_deeply($ret, [ got => {where => "in the oven", for => "baby and me"}], 'got args back' )
+    or diag explain $ret;
+undef $argsWeGot;
 
 Clustericious::Client::Command->run( $client, ( "put", "--where", 'in the oven', "--for=baby_and_me" ) );
-is_deeply $argsWeGot, [got => { where => 'in the oven', for => "baby_and_me" }];
+is_deeply $argsWeGot, [got => { where => 'in the oven', for => "baby_and_me" }], "cli args with equals sign parsed"
+    or diag explain $argsWeGot;
+undef $argsWeGot;
+
+Clustericious::Client::Command->run( $client, ( "legacy", qw/a b c/ ) );
+is_deeply $argsWeGot, [got => [qw/a b c/]], 'default positional params' or diag explain $argsWeGot;
 
 {
     local $SIG{__WARN__} = sub {}; # no stderr messages

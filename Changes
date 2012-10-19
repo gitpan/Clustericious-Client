@@ -9,3 +9,5 @@ Revision history for Clustericious-Client
 0.66     Fri Sep 21 15:17:58 EDT 2012
          route_args and more docs
 
+0.67    Fri Oct 19 15:11:36 EDT 2012
+        improved route_args, many more docs

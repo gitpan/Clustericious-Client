@@ -1,5 +1,8 @@
 Build.PL
 Changes
+eg/tracks.pl
+eg/tracks.pm
+eg/tracks_cli
 lib/Clustericious/Client.pm
 lib/Clustericious/Client/Command.pm
 lib/Clustericious/Client/Meta.pm

@@ -1,12 +1,12 @@
 ---
-abstract: 'Constructor for clients of Clustericious apps.'
+abstract: 'Construct command line and perl clients for RESTful services.'
 author:
   - 'Curt Tilmes <Curt.Tilmes@nasa.gov>'
 build_requires: {}
 configure_requires:
-  Module::Build: 0.4
+  Module::Build: 0.40
 dynamic_config: 1
-generated_by: 'Module::Build version 0.4, CPAN::Meta::Converter version 2.120921'
+generated_by: 'Module::Build version 0.4003, CPAN::Meta::Converter version 2.112621'
 license: unknown
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -15,7 +15,7 @@ name: Clustericious-Client
 provides:
   Clustericious::Client:
     file: lib/Clustericious/Client.pm
-    version: 0.66
+    version: 0.67
   Clustericious::Client::Command:
     file: lib/Clustericious/Client/Command.pm
     version: 0
@@ -37,6 +37,7 @@ provides:
 requires:
   Clustericious::Config: 0.01
   Data::Rmap: 0
+  DateTime::Format::DateParse: 0
   DateTime::Format::ISO8601: 0
   File::Temp: 0
   JSON::XS: 0
@@ -45,4 +46,4 @@ requires:
   Mojolicious: 1.65
   Proc::Daemon: 0.05
   Term::Prompt: 0
-version: 0.66
+version: 0.67

@@ -54,8 +54,8 @@ use Log::Log4perl qw/:easy/;
 use Scalar::Util qw/blessed/;
 use Data::Rmap qw/rmap_ref/;
 use File::Temp;
-use Getopt::Long qw/GetOptionsFromArray/;
 
+use Clustericious::Log;
 use Clustericious::Client::Meta;
 
 sub _usage {
@@ -154,7 +154,7 @@ sub run {
     while ($arg = shift @args) {
         for ($arg) {
             /--remote/ and do {
-                my $remote = shift;
+                my $remote = shift @args;
                 TRACE "Using remote $remote";
                 $client->remote($remote);
                 next ARG;
@@ -186,51 +186,10 @@ sub run {
         client_class => ref $client
     );
 
-    if (my $route_args = $meta->get("args")) {
-        my %req = map { $_->{required} ? ($_->{name} => 1):() } @$route_args;
-        my @getopt = map {
-             $_->{name}
-             .($_->{alt} ? "|$_->{alt}" : "")
-             .($_->{type} || '')
-             } @$route_args;
-        my %method_args;
+    if ($meta->get('args')) {
+        # No heuristics for args.
 
-        my $doc = join "\n", "Valid options for '$method' are :",
-          map {
-             sprintf('  --%-20s%-15s%s', $_->{name}, $_->{required} ? 'required' : '', $_->{doc} || "" )
-           } @$route_args;
-
-        GetOptionsFromArray(\@args, \%method_args, @getopt) or LOGDIE "Invalid options. $doc\n";
-
-        LOGDIE "Unknown option : @args\n$doc\n" if @args;
-        for (@$route_args) {
-            my $name = $_->{name};
-            next unless $_->{required};
-            next if exists($method_args{$name});
-            LOGDIE "Missing value for required argument '$name'\n$doc\n";
-        }
-        for (@$route_args) {
-            my $name = $_->{name};
-            next unless $_->{preprocess};
-            LOGDIE "internal error: cannot handle $_->{preprocess}" unless $_->{preprocess} =~ /yamldoc|list/;
-            my $filename = $method_args{$name} or next;
-            LOGDIE "Argument for $name should be a filename, an arrayref or - for STDIN" if $filename && $filename =~ /\n/;
-            LOGDIE "Cannot read file $filename" unless $filename eq '-' || -e $filename;
-            for ($_->{preprocess}) {
-                /yamldoc/ and do {
-                    $method_args{$name} = ($filename eq "-" ? Load(join "",<STDIN>) : LoadFile($filename))
-                            or LOGDIE "Error parsing yaml in ($filename)";
-                    next;
-                };
-                /list/ and do {
-                    $method_args{$name} = [ map { chomp; $_ } IO::File->new("< $filename")->getlines ];
-                    next;
-                };
-            }
-        }
-
-        # run
-        my $obj = $client->$method(%method_args);
+        my $obj = $client->$method({ command_line => 1 }, @args);
 
         ERROR $client->errorstring if $client->errorstring;
 
@@ -258,7 +217,7 @@ sub run {
         return;
     }
 
-    # Code below here should be deprecated.
+    # Code below here should be deprecated, these are various heuristics for argument processing.
 
     my @extra_args = ( '/dev/null' );
     my $have_filenames;
@@ -312,7 +271,7 @@ sub run {
             }
             INFO $msg;
         } else {
-           print _prettyDump($obj);
+           print _prettyDump($obj) unless $TESTING;
         }
     }
     return;

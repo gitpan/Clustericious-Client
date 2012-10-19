@@ -1,0 +1,17 @@
+#!/usr/bin/env perl
+
+use lib '.';
+use Clustericious::Client::Command;
+use tracks;
+
+use Log::Log4perl qw/:easy/;
+Log::Log4perl->easy_init($TRACE);
+
+# Sample ~/etc/Tracks.conf :
+#
+# ---
+# url : 'http://8tracks.com'
+#
+
+Clustericious::Client::Command->run(Tracks->new, @ARGV);
+

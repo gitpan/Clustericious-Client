@@ -18,6 +18,7 @@ my $build = Module::Build->new(
           ($^O ne 'MSWin32' ? ('Proc::Daemon'               => '0.05') : ()),
           'File::Temp'                 => 0,
           'DateTime::Format::ISO8601'  => 0,
+          'DateTime::Format::DateParse'=> 0,
           'Data::Rmap'                 => 0,
           'Term::Prompt'               => 0,
     },

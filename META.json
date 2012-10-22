@@ -22,6 +22,7 @@
       "runtime" : {
          "requires" : {
             "Clustericious::Config" : "0.01",
+            "Clustericious::Log" : 0,
             "Data::Rmap" : 0,
             "DateTime::Format::DateParse" : 0,
             "DateTime::Format::ISO8601" : 0,
@@ -38,7 +39,7 @@
    "provides" : {
       "Clustericious::Client" : {
          "file" : "lib/Clustericious/Client.pm",
-         "version" : "0.67"
+         "version" : "0.68"
       },
       "Clustericious::Client::Command" : {
          "file" : "lib/Clustericious/Client/Command.pm",
@@ -66,5 +67,5 @@
       }
    },
    "release_status" : "stable",
-   "version" : "0.67"
+   "version" : "0.68"
 }

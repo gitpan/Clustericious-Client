@@ -12,6 +12,7 @@ my $build = Module::Build->new(
     requires => {
         'Mojolicious'                  => '1.65',
           'Clustericious::Config'      => '0.01',
+          'Clustericious::Log'         => 0,
           'Log::Log4perl::CommandLine' => 0,
           'MojoX::Log::Log4perl'       => 0,
           'JSON::XS'                   => 0,

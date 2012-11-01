@@ -33,6 +33,24 @@ route_args 'fry' => [
     { name => 'things', type => '=s', preprocess => 'list' },
 ];
 
+route 'grant' => 'POST' => '/grant';
+route_args 'grant' => [
+  { name => 'user',     type => '=s', modifies_url => 'append', positional => 'one' },
+  { name => 'action',   type => '=s', modifies_url => 'append', positional => 'one' },
+  { name => 'resource', type => '=s', modifies_url => 'append', positional => 'one' },
+];
+
+route_args 'ingest' => [
+    { name => 'archiveset', type => '=i', alt => 'archive_set' },
+    { name => 'url',        type => '=s'                       },
+    { name => 'filename',   positional => 'many'               },
+];
+
+route_args 'one_with_args' => [
+  { name => 'somearg', type => '=s'   },
+  { name => 'posarg', type => '=s', positional => "one" },
+];
+
 # TODO ensure no { command_line => 1 } if no route_args.
 our $argsWeGot;
 sub put {
@@ -59,6 +77,19 @@ sub legacy {
     $argsWeGot = [ got => \@args ];
     return [ got => \@args ];
 }
+sub ingest {
+    my $c = shift;
+    my %args = $c->meta_for->process_args(@_);
+    $argsWeGot = { got => \%args };
+    return { got => \%args };
+}
+sub one_with_args {
+    my $c = shift;
+    my %args = $c->meta_for->process_args(@_);
+    $argsWeGot = { got => \%args };
+    return { got => \%args };
+}
+
 
 package main;
 use Log::Log4perl qw(:easy);
@@ -105,7 +136,7 @@ is_deeply $argsWeGot, [got => [qw/a b c/]], 'default positional params' or diag 
     # extra arg
     eval { Clustericious::Client::Command->run($client, put => '--baby' => 'there' ); };
     ok $@, "exception for invalid option";
-    like $@, qr/invalid/i, 'message has invalid';
+    like $@, qr/missing/i, 'message has invalid';
 }
 
 my $struct = { some => [ deep => struct => { here => 12 } ] };
@@ -139,6 +170,16 @@ undef $argsWeGot;
 
 $client->fry(things => [qw/a b c/]);
 is_deeply($argsWeGot, [ got => { things => [qw/a b c/] }], "got arrayref for list");
+
+$client->grant('foo','bar','baz');
+is $client->tx->req->url->path, '/grant/foo/bar/baz';
+
+$ret = $client->ingest(archiveset => 100, "first_file", "second_file", "third_file");
+is_deeply($ret, {got => {archiveset => 100, filename => [qw/first_file second_file third_file/]}}, "named and multi-positional")
+    or diag explain $ret;
+
+$ret = $client->one_with_args(somearg => "foo", "flubber");
+is_deeply($ret, { got => {somearg => "foo", posarg => "flubber"} }, "named and positional");
 
 done_testing();
 

@@ -3,7 +3,7 @@ package Clustericious::Client;
 use strict; no strict 'refs';
 use warnings;
 
-our $VERSION = '0.68';
+our $VERSION = '0.70';
 
 =head1 NAME
 
@@ -613,10 +613,12 @@ sub _doit {
     my %url_modifier;
     my %gen_url_modifier = (
         query => sub { my $name = shift;  sub { my ($u,$v) = @_; $u->query({$name => $v}) }  },
-        append => sub { my $name = shift; sub { my ($u,$v) = @_; push @{ $u->path->parts } , $v } },
+        append => sub { my $name = shift; sub { my ($u,$v) = @_; push @{ $u->path->parts } , $v; $u; } },
     );
+    my @positional_args;
     if ($meta && (my $arg_spec = $meta->get('args'))) {
         for (@$arg_spec) {
+            push @positional_args, $_->{name} if $_->{positional} && $_->{positional} eq 'one';
             my $modifies_url = $_->{modifies_url} or next;
             if (ref ($modifies_url) eq 'CODE') {
                 $url_modifier{$_->{name}} = $modifies_url;
@@ -635,6 +637,9 @@ sub _doit {
             $headers = { 'Content-Type' => 'application/json' };
         } elsif (ref $arg eq 'CODE') {
             $cb = $self->_mycallback($arg);
+        } elsif (@positional_args && (my $poscode = $url_modifier{$positional_args[0]})) {
+            $url = $poscode->($url, $arg);
+            shift @positional_args;
         } elsif (my $code = $url_modifier{$arg}) {
             $url = $code->($url, shift @args);
         } elsif ($method eq "GET" && $arg =~ s/^--//) {
@@ -809,6 +814,7 @@ sub _get_user_pw  {
     my $self = shift;
     my $host = shift;
     my $realm = shift;
+    $realm = '' unless defined $realm;
     return @{ $self->_cache->{$host}{$realm} } if exists($self->_cache->{$host}{$realm});
     # "use"ing causes too many warnings; load on demand.
     require Term::Prompt;

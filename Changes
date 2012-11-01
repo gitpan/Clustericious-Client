@@ -1,5 +1,9 @@
 Revision history for Clustericious-Client
 
+0.70    Thu Nov  1 10:18:14 EDT 2012
+        fixes to many/one arg handling
+        allow empty realms (Graham)
+
 0.68    Mon Oct 22 11:45:11 EDT 2012
         fixed dependency
 

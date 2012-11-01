@@ -125,12 +125,28 @@ sub process_args {
     }
     my $route_args = $meta->get('args') or return @args;
     unless ($cli) {
-        # method call.
-        LOGDIE "Expected name value pairs, not '@args'" unless @args % 2==0;
-        my @new;
-        while (my ($k,$v) = splice @args, 0, 2) {
-            push @new, "--$k", $v;
+        # method call, modify @args so that getopt will work.
+        # Prepend a "--" for named params.
+        my %valid;
+        for (@$route_args) {
+            next if $_->{positional};
+            my @name = ( $_->{name} );
+            if ($_->{alt}) {
+                push @name, split '|', $_->{alt};
+            }
+            my $type = $_->{type};
+            $valid{$_} = $type for @name;
         }
+        my @new;
+        while (my $in = shift @args) {
+            if (exists($valid{$in})) {
+                push @new, "--$in";
+                push @new, shift @args if @args && defined($valid{$in}) && length($valid{$in});
+            } else {
+                push @new, $in;
+            }
+        }
+
         @args = @new;
     }
 
@@ -147,6 +163,7 @@ sub process_args {
        } @$route_args;
 
     my %method_args;
+    Getopt::Long::Configure(qw/pass_through/); # TODO use OO interface
     GetOptionsFromArray(\@args, \%method_args, @getopt) or LOGDIE "Invalid options. $doc\n";
 
     for (@$route_args) {

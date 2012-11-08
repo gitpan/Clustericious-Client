@@ -15,6 +15,7 @@ MANIFEST.SKIP
 META.json
 META.yml
 t/args.t
+t/args.t.new
 t/basic.t
 t/client.t
 t/datetime.t

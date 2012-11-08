@@ -3,7 +3,7 @@ package Clustericious::Client;
 use strict; no strict 'refs';
 use warnings;
 
-our $VERSION = '0.70';
+our $VERSION = '0.72';
 
 =head1 NAME
 
@@ -479,6 +479,14 @@ are treated as HTTP headers (for a GET request).  If a hash
 reference is passed, the method changes to POST and the hash is
 encoded into the body as application/json.
 
+=item modifies_payload, key
+
+Describes how the parameter modifies the payload.
+
+'hash' means set $body->{$name} to $value.
+'array' means push ( $name => $value ) onto $body->{$key}.
+   (key should also be specified)
+
 =item positional
 
 Can be 'one' or 'many'.
@@ -611,24 +619,49 @@ sub _doit {
     $url = Mojo::URL->new($url) unless ref $url;
     my $parameters = $url->query;
     my %url_modifier;
+    my %payload_modifer;
     my %gen_url_modifier = (
         query => sub { my $name = shift;  sub { my ($u,$v) = @_; $u->query({$name => $v}) }  },
         append => sub { my $name = shift; sub { my ($u,$v) = @_; push @{ $u->path->parts } , $v; $u; } },
     );
     my @positional_args;
     if ($meta && (my $arg_spec = $meta->get('args'))) {
+        my @new_args;
+        my %a;
+        %a = @args unless @args % 2;
         for (@$arg_spec) {
             push @positional_args, $_->{name} if $_->{positional} && $_->{positional} eq 'one';
-            my $modifies_url = $_->{modifies_url} or next;
-            if (ref ($modifies_url) eq 'CODE') {
-                $url_modifier{$_->{name}} = $modifies_url;
-            } elsif (my $gen = $gen_url_modifier{$modifies_url}) {
-                $url_modifier{$_->{name}} = $gen->($_->{name});
-            } else  {
-                die "don't understand how to interepret modifies_url=$modifies_url";
+            if (my $modifies_url = $_->{modifies_url}) {
+                if (ref ($modifies_url) eq 'CODE') {
+                    $url_modifier{$_->{name}} = $modifies_url;
+                } elsif (my $gen = $gen_url_modifier{$modifies_url}) {
+                    $url_modifier{$_->{name}} = $gen->($_->{name});
+                } else  {
+                    die "don't understand how to interepret modifies_url=$modifies_url";
+                }
+            }
+            my $modifies_payload = $_->{modifies_payload} || "";
+            if ($modifies_payload eq 'array') {
+                my $name = $_->{name};
+                my $key = $_->{key} or LOGDIE "No key for $name (modifies_payload=array needs a hash key to act on)";
+                $payload_modifer{$name} = sub { my $body = shift; $body ||= {}; push @{ $body->{$key} }, ( $name => shift); $body };
+            }
+            if ($modifies_payload eq 'hash') {
+                my $name = $_->{name};
+                $payload_modifer{$name} = sub { my $body = shift; $body ||= {}; $body->{$name} = shift; $body };
+            }
+
+            if ($_->{positional} && @args) {
+                push @new_args, shift @args;
+                %a = @args unless @args % 2;
+            }
+            if (!$_->{positional}) {
+                push @new_args, ($_->{name} => $a{$_->{name}}) if exists($a{$_->{name}});
             }
         }
+        @args = @new_args;
     }
+
     while (defined(my $arg = shift @args)) {
         if (ref $arg eq 'HASH') {
             $method = 'POST';
@@ -642,6 +675,8 @@ sub _doit {
             shift @positional_args;
         } elsif (my $code = $url_modifier{$arg}) {
             $url = $code->($url, shift @args);
+        } elsif (my $code2 = $payload_modifer{$arg}) {
+            $body = $code2->($body, shift @args);
         } elsif ($method eq "GET" && $arg =~ s/^--//) {
             my $value = shift @args;
             $parameters->append($arg => $value);
@@ -667,6 +702,9 @@ sub _doit {
     DEBUG ( (ref $self)." : $method " ._sanitize_url($url));
     $headers->{Connection} ||= 'Close';
     $headers->{Accept}     ||= 'application/json';
+
+    $body = encode_json $body if $body && ref $body eq 'HASH' || ref $body eq 'ARRAY';
+
     return $self->client->build_tx($method, $url, $headers, $body, $cb) if $cb;
 
     my $tx = $self->client->build_tx($method, $url, $headers, $body);

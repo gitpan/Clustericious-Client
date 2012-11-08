@@ -1,5 +1,11 @@
 Revision history for Clustericious-Client
 
+0.72    Thu Nov  8 08:57:11 EST 2012
+        modifies_payload
+
+0.71    Fri Nov  2 14:34:27 EDT 2012
+        Fix handling of 'alt' for required args
+
 0.70    Thu Nov  1 10:18:14 EDT 2012
         fixes to many/one arg handling
         allow empty realms (Graham)

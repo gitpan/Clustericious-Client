@@ -132,7 +132,7 @@ sub process_args {
             next if $_->{positional};
             my @name = ( $_->{name} );
             if ($_->{alt}) {
-                push @name, split '|', $_->{alt};
+                push @name, split '\|', $_->{alt};
             }
             my $type = $_->{type};
             $valid{$_} = $type for @name;

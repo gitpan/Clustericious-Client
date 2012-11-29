@@ -16,7 +16,6 @@ my $build = Module::Build->new(
           'Log::Log4perl::CommandLine' => 0,
           'MojoX::Log::Log4perl'       => 0,
           'JSON::XS'                   => 0,
-          ($^O ne 'MSWin32' ? ('Proc::Daemon'               => '0.05') : ()),
           'File::Temp'                 => 0,
           'DateTime::Format::ISO8601'  => 0,
           'DateTime::Format::DateParse'=> 0,

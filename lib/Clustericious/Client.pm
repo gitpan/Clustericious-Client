@@ -3,7 +3,7 @@ package Clustericious::Client;
 use strict; no strict 'refs';
 use warnings;
 
-our $VERSION = '0.72';
+our $VERSION = '0.73';
 
 =head1 NAME
 
@@ -154,23 +154,7 @@ sub import
  my $f = Foo::Client->new(app => 'MyApp'); # For testing...
 
 If the configuration file has a "url" entry, this will
-be used as the default url (first case above).  Additionally,
-if the ssh_tunnel key is given in the config file, a tunnel
-may be created automatically (and destroyed when the client
-is destroyed).  Here's a sample configuration :
-
-   "url" : "http://localhost:12345",
-   "ssh_tunnel" : {
-        "remote_host" : "omidev",
-        "server_host" : "localhost",
-        "server_port" : "9014"
-    },
-
-This would automatically execute this
-
-    ssh -N -L12345:localhost:9014 omidev
-
-in the background.
+be used as the default url (first case above).
 
 =cut
 
@@ -200,10 +184,6 @@ sub new
     }
 
     $self->client->inactivity_timeout($ENV{CLUSTERICIOUS_KEEP_ALIVE_TIMEOUT} || 300);
-    if (!$args{server_url} && $self->_config->ssh_tunnel(default => '')) {
-        INFO "Found an ssh tunnel for ".(ref $self)." in config file";
-        $self->_start_ssh_tunnel;
-    }
 
     return $self;
 }
@@ -703,7 +683,11 @@ sub _doit {
     $headers->{Connection} ||= 'Close';
     $headers->{Accept}     ||= 'application/json';
 
-    $body = encode_json $body if $body && ref $body eq 'HASH' || ref $body eq 'ARRAY';
+    if($body && ref $body eq 'HASH' || ref $body eq 'ARRAY')
+    {
+        $headers->{'Content-Type'} = 'application/json';
+        $body = encode_json $body;
+    }
 
     return $self->client->build_tx($method, $url, $headers, $body, $cb) if $cb;
 
@@ -938,89 +922,6 @@ sub logtail {
     my $self = shift;
     my $got = $self->_doit(GET => '/log', @_);
     return { text => $got };
-}
-
-sub _ssh_pidfile {
-    sprintf("%s/%s_acps_ssh.pid",($ENV{TMPDIR} || "/tmp"),shift->_appname);
-}
-
-=head2 ssh_tunnel_is_up
-
-Check to see if an ssh tunnel is alive for the current client.
-
-=cut
-
-sub ssh_tunnel_is_up {
-    my $pidfile = shift->_ssh_pidfile;
-    if (-e $pidfile) {
-        my ($pid) = IO::File->new("<$pidfile")->getlines;
-        if ($pid and kill 0, $pid) {
-            DEBUG "found running ssh ($pid)";
-            return 1;
-        }
-    }
-    return 0;
-}
-
-sub _ssh_cmd {
-    my $self = shift;
-    my $conf = $self->_config->ssh_tunnel;
-    my $url = Mojo::URL->new($self->server_url);
-    my $cmd = sprintf( "ssh -n -N -L%d:%s:%d %s",
-        $url->port,           $conf->{server_host},
-        $conf->{server_port}, $conf->{remote_host}
-    );
-    return $cmd;
-}
-
-sub _start_ssh_tunnel {
-    my $self = shift;
-
-    return if $self->ssh_tunnel_is_up;
-
-    my $error_file = File::Temp->new();
-    my $out_file = File::Temp->new();
-
-    my $cmd = $self->_ssh_cmd;
-    INFO "Executing $cmd";
-    require Proc::Daemon;
-    my $proc = Proc::Daemon->new(
-        exec_command => $cmd,
-        pid_file     => $self->_ssh_pidfile,
-        child_STDERR => $error_file,
-        child_STDOUT => $out_file,
-        work_dir     => "/tmp"
-    );
-    my $pid = $proc->Init or do {
-        FATAL "Could not start $cmd, see $error_file or $out_file";
-        $error_file->unlink_on_destroy(0);
-        $out_file->unlink_on_destroy(0);
-    };
-    sleep 1;
-    DEBUG "new ssh pid is $pid";
-}
-
-=head2 stop_ssh_tunnel
-
-Stop any running ssh tunnel for this client.
-
-=cut
-
-sub stop_ssh_tunnel {
-    my $self = shift;
-    require Proc::Daemon;
-    my $proc = Proc::Daemon->new( pid_file => $self->_ssh_pidfile);
-    WARN "pid file is ".$self->_ssh_pidfile;
-    my $pid = $proc->Status($self->_ssh_pidfile) or do {
-        INFO "Could not stop ssh tunnel for ".(ref $self);
-        return;
-    };
-    my $killed = $proc->Kill_Daemon($self->_ssh_pidfile) or do {
-        WARN "Could not kill ssh for ".(ref $self);
-        return;
-    };
-    DEBUG "Killed ssh for ".(ref $self)." ($killed)";
-    return 1;
 }
 
 =head1 EXAMPLES

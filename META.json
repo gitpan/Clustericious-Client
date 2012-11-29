@@ -31,7 +31,6 @@
             "Log::Log4perl::CommandLine" : 0,
             "MojoX::Log::Log4perl" : 0,
             "Mojolicious" : "1.65",
-            "Proc::Daemon" : "0.05",
             "Term::Prompt" : 0
          }
       }
@@ -39,7 +38,7 @@
    "provides" : {
       "Clustericious::Client" : {
          "file" : "lib/Clustericious/Client.pm",
-         "version" : "0.72"
+         "version" : "0.73"
       },
       "Clustericious::Client::Command" : {
          "file" : "lib/Clustericious/Client/Command.pm",
@@ -67,5 +66,5 @@
       }
    },
    "release_status" : "stable",
-   "version" : "0.72"
+   "version" : "0.73"
 }

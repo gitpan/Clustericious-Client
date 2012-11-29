@@ -1,5 +1,9 @@
 Revision history for Clustericious-Client
 
+0.73    Thu Nov 29 14:17:34 EST 2012
+        fixed json content-type header for some routes
+        removed ssl tunnel support
+
 0.72    Thu Nov  8 08:57:11 EST 2012
         modifies_payload
 

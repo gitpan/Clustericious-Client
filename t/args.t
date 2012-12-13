@@ -40,6 +40,24 @@ route_args 'grant' => [
   { name => 'resource', type => '=s', modifies_url => 'append', positional => 'one' },
 ];
 
+route 'grant_pos' => 'POST' => '/grant_pos';
+route_args 'grant_pos' => [
+  { name => 'a', type => '=s', modifies_url => 'append', positional => 'one' },
+  { name => 'b', type => '=s', modifies_url => 'append', positional => 'one' },
+  { name => 'c', type => '=s', modifies_url => 'append', positional => 'one' },
+  { name => 'd', type => '=s', modifies_url => 'append', positional => 'one' },
+  { name => 'e', type => '=s', modifies_url => 'append', positional => 'one' },
+  { name => 'f', type => '=s', modifies_url => 'append', positional => 'one' },
+  { name => 'g', type => '=s', modifies_url => 'append', positional => 'one' },
+];
+
+route 'grant_named' => 'POST' => '/grant_named';
+route_args 'grant_named' => [
+  { name => 'user',     type => '=s', modifies_url => 'append',},
+  { name => 'action',   type => '=s', modifies_url => 'append',},
+  { name => 'resource', type => '=s', modifies_url => 'append',},
+];
+
 route_args 'ingest' => [
     { name => 'archiveset', type => '=i', alt => 'archive_set' },
     { name => 'url',        type => '=s'                       },
@@ -159,6 +177,12 @@ is_deeply($argsWeGot, [ got => { things => [qw/a b c/] }], "got arrayref for lis
 
 $client->grant('foo','bar','baz');
 is $client->tx->req->url->path, '/grant/foo/bar/baz';
+
+$client->grant_pos(1,2,3,4,5,6,7);
+is $client->tx->req->url->path, '/grant_pos/1/2/3/4/5/6/7';
+
+$client->grant_named(user => 'foo',action => 'bar',resource => 'baz');
+is $client->tx->req->url->path, '/grant_named/foo/bar/baz';
 
 $ret = $client->ingest(archiveset => 100, "first_file", "second_file", "third_file");
 is_deeply($ret, [got => {archiveset => 100, filename => [qw/first_file second_file third_file/]}], "named and multi-positional")

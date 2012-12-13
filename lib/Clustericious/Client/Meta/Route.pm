@@ -166,6 +166,7 @@ sub process_args {
     Getopt::Long::Configure(qw/pass_through/); # TODO use OO interface
     GetOptionsFromArray(\@args, \%method_args, @getopt) or LOGDIE "Invalid options. $doc\n";
 
+    # Check for required args
     for (@$route_args) {
         my $name = $_->{name};
         next unless $_->{required};
@@ -173,7 +174,7 @@ sub process_args {
         LOGDIE "Missing value for required argument '$name'\n$doc\n";
     }
 
-    # Maybe positional params can eat up @args.
+    # Check for positional args
     for (@$route_args) {
         next unless @args;
         my $spec = $_->{positional} or next;
@@ -192,6 +193,8 @@ sub process_args {
     }
 
     LOGDIE "Unknown option : @args\n$doc\n" if @args;
+
+    # Check for preprocessing of args
     for (@$route_args) {
         my $name = $_->{name};
         next unless $_->{preprocess};
@@ -216,7 +219,15 @@ sub process_args {
             };
         }
     }
-    return %method_args;
+
+    # Order the args properly
+    my @method_args;
+    for (@$route_args) {
+        my $name = $_->{name};
+        next unless exists($method_args{$name});
+        push @method_args, $name => $method_args{$name};
+    }
+    return @method_args;
 }
 
 =head1 SEE ALSO

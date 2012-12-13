@@ -3,7 +3,7 @@ package Clustericious::Client;
 use strict; no strict 'refs';
 use warnings;
 
-our $VERSION = '0.74';
+our $VERSION = '0.75';
 
 =head1 NAME
 
@@ -475,17 +475,21 @@ If set, this is a positional param, not a named param.  i.e.
 getopt will not be used to parse the command line, and
 it will be take from a list sent to the method.  For instance
 
-  route_args subname => [ { name => 'id', positional => 'one' } ];
+  route_args name => [ { name => 'id', positional => 'one' } ];
 
 Then
 
-  $client->subname($id)
+  $client->name($id)
 
 or
 
- commandlineclient subname id
+ commandlineclient name id
 
-If set to 'many', all occurences will be added to the url.
+will result in the method receiving (id => $id).
+
+If set to 'many', multiple parameters may be sent, e.g.
+
+    $client->name($id1, $id2,....)
 
 =back
 

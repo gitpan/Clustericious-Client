@@ -166,14 +166,6 @@ sub process_args {
     Getopt::Long::Configure(qw/pass_through/); # TODO use OO interface
     GetOptionsFromArray(\@args, \%method_args, @getopt) or LOGDIE "Invalid options. $doc\n";
 
-    # Check for required args
-    for (@$route_args) {
-        my $name = $_->{name};
-        next unless $_->{required};
-        next if exists($method_args{$name});
-        LOGDIE "Missing value for required argument '$name'\n$doc\n";
-    }
-
     # Check for positional args
     for (@$route_args) {
         next unless @args;
@@ -190,6 +182,14 @@ sub process_args {
             };
             die "unknown positional spec : $spec";
         }
+    }
+
+    # Check for required args
+    for (@$route_args) {
+        my $name = $_->{name};
+        next unless $_->{required};
+        next if exists($method_args{$name});
+        LOGDIE "Missing value for required argument '$name'\n$doc\n";
     }
 
     LOGDIE "Unknown option : @args\n$doc\n" if @args;

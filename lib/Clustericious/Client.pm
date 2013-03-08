@@ -3,7 +3,7 @@ package Clustericious::Client;
 use strict; no strict 'refs';
 use warnings;
 
-our $VERSION = '0.75';
+our $VERSION = '0.76';
 
 =head1 NAME
 
@@ -23,6 +23,19 @@ tracks.pm :
         { name => 'per_page',type => '=i', modifies_url => "query", },
         { name => 'tags',    type => '=s', modifies_url => "query" },
     ];
+    # a 'mixes' method will be constructed automatically.
+    # a 'mixes' command line parameter will be recognized automatically.
+
+    route 'play' => '/play.json';
+    route_args play => [
+        { name => 'token', type => '=s', modifies_url => 'query', required => 1 }
+    ];
+    sub play {
+        my $c = shift;
+        my %args = $c->meta_for->process_args(@_);
+        # do something with $args{token}
+    }
+    # A 'play' command line parameter will call the above method.
 
 tracks.pl :
 
@@ -272,8 +285,7 @@ parts)
 
 =cut
 
-sub errorstring
-{
+sub errorstring {
     my $self = shift;
     WARN "Missing response in client object" unless $self->res;
     return unless $self->res;
@@ -281,6 +293,21 @@ sub errorstring
     $self->res->error
       || sprintf( "(%d) %s", $self->res->code, $self->res->message );
 }
+
+=head2 has_error
+
+Returns true if there was a recent error.
+
+=cut
+
+sub has_error {
+    my $c = shift;
+    return unless $c->tx || $c->res;
+    return 1 if $c->tx && $c->tx->error;
+    return 1 if $c->res && !$c->res->is_status_class(200);
+    return 0;
+}
+
 
 =head1 FUNCTIONS
 
@@ -326,6 +353,7 @@ sub route {
             route_name => $subname
     );
 
+    $meta->set(method => $method);
     $meta->set_doc($doc);
 
     if ($objclass) {

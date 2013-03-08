@@ -191,7 +191,7 @@ sub run {
 
         my $obj = $client->$method({ command_line => 1 }, @args);
 
-        ERROR $client->errorstring if $client->errorstring;
+        ERROR $client->errorstring if $client->has_error;
 
         # Copied from below, until that code is deprecated.
         if ( blessed($obj) && $obj->isa("Mojo::Transaction") ) {

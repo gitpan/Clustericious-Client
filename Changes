@@ -1,5 +1,9 @@
 Revision history for Clustericious-Client
 
+0.76    Fri Mar  8 13:46:19 EST 2013
+        has_error()
+        added method to meta (Graham)
+
 0.75    Thu Dec 13 06:36:33 PST 2012
         Fixed handling of required positional args.
 

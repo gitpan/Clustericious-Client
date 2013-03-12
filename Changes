@@ -1,8 +1,11 @@
 Revision history for Clustericious-Client
 
+0.77    Tue Mar 12 08:39:20 EDT 2013
+        added $url to meta (Graham)
+
 0.76    Fri Mar  8 13:46:19 EST 2013
         has_error()
-        added method to meta (Graham)
+        added $method to meta (Graham)
 
 0.75    Thu Dec 13 06:36:33 PST 2012
         Fixed handling of required positional args.

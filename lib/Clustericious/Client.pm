@@ -3,7 +3,7 @@ package Clustericious::Client;
 use strict; no strict 'refs';
 use warnings;
 
-our $VERSION = '0.76';
+our $VERSION = '0.77';
 
 =head1 NAME
 
@@ -354,6 +354,7 @@ sub route {
     );
 
     $meta->set(method => $method);
+    $meta->set(url    => $url);
     $meta->set_doc($doc);
 
     if ($objclass) {

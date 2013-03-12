@@ -38,7 +38,7 @@
    "provides" : {
       "Clustericious::Client" : {
          "file" : "lib/Clustericious/Client.pm",
-         "version" : "0.76"
+         "version" : "0.77"
       },
       "Clustericious::Client::Command" : {
          "file" : "lib/Clustericious/Client/Command.pm",
@@ -66,5 +66,5 @@
       }
    },
    "release_status" : "stable",
-   "version" : "0.76"
+   "version" : "0.77"
 }

@@ -4,8 +4,6 @@ Clustericious::Client::Meta - simple meta object for constructing clients
 
 =head1 METHODS
 
-=over
-
 =cut
 
 package Clustericious::Client::Meta;
@@ -17,7 +15,7 @@ our %RouteAttributes; # hash from class name to hash ref of attributes.
 our %Objects; # hash from class name to array ref of objects.
 our @CommonRoutes = ( [ "version" => '' ], [ "status" => '' ], [ "api" => '' ], [ "logtail" => '' ] );
 
-=item add_route
+=head2 add_route
 
 Add or replace documentation about a route.
 
@@ -41,7 +39,7 @@ sub add_route { # Keep track of routes that have are added.
     push @{ $Routes{$for} }, [ $route_name => $route_doc ];
 }
 
-=item get_route_doc
+=head2 get_route_doc
 
 Get documentation for a route.
 
@@ -57,7 +55,7 @@ sub get_route_doc {
     return $found->[1];
 }
 
-=item add_route_attribute
+=head2 add_route_attribute
 
 Add an attribute for a route.
 
@@ -85,7 +83,7 @@ sub add_route_attribute {
     $RouteAttributes{$for}->{$route_name}{$attr_name} = $attr_value;
 }
 
-=item get_route_attribute
+=head2 get_route_attribute
 
 Like the above but retrieve an attribute.
 
@@ -99,7 +97,7 @@ sub get_route_attribute {
     return $RouteAttributes{$for}->{$route_name}{$attr_name};
 }
 
-=item add_object
+=head2 add_object
 
 Add an object>
 
@@ -118,7 +116,7 @@ sub add_object {
     push @{ $Objects{$for} }, [ $obj_name => $obj_doc ];
 }
 
-=item routes, objects
+=head2 routes, objects
 
 Return an array ref of routes/objects.
 

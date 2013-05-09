@@ -1,5 +1,8 @@
 Revision history for Clustericious-Client
 
+0.78    Thu May  9 16:56:22 EDT 2013
+        Fixed POD errors
+
 0.77    Tue Mar 12 08:39:20 EDT 2013
         added $url to meta (Graham)
 

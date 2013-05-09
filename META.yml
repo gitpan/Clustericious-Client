@@ -6,7 +6,7 @@ build_requires: {}
 configure_requires:
   Module::Build: 0.40
 dynamic_config: 1
-generated_by: 'Module::Build version 0.4003, CPAN::Meta::Converter version 2.112621'
+generated_by: 'Module::Build version 0.4005, CPAN::Meta::Converter version 2.130880'
 license: unknown
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -15,25 +15,19 @@ name: Clustericious-Client
 provides:
   Clustericious::Client:
     file: lib/Clustericious/Client.pm
-    version: 0.77
+    version: 0.78
   Clustericious::Client::Command:
     file: lib/Clustericious/Client/Command.pm
-    version: 0
   Clustericious::Client::Meta:
     file: lib/Clustericious/Client/Meta.pm
-    version: 0
   Clustericious::Client::Meta::Route:
     file: lib/Clustericious/Client/Meta/Route.pm
-    version: 0
   Clustericious::Client::Object:
     file: lib/Clustericious/Client/Object.pm
-    version: 0
   Clustericious::Client::Object::DateTime:
     file: lib/Clustericious/Client/Object/DateTime.pm
-    version: 0
   Clustericious::Client::Object::Params:
     file: lib/Clustericious/Client/Object/Params.pm
-    version: 0
 requires:
   Clustericious::Config: 0.01
   Clustericious::Log: 0
@@ -46,4 +40,4 @@ requires:
   MojoX::Log::Log4perl: 0
   Mojolicious: 1.65
   Term::Prompt: 0
-version: 0.77
+version: 0.78

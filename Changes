@@ -1,5 +1,8 @@
 Revision history for Clustericious-Client
 
+0.79    Fri May 10 13:54:06 EDT 2013
+        Add $VERSION to each module within distribution
+
 0.78    Thu May  9 16:56:22 EDT 2013
         Fixed POD errors
 

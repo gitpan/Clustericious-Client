@@ -38,27 +38,33 @@
    "provides" : {
       "Clustericious::Client" : {
          "file" : "lib/Clustericious/Client.pm",
-         "version" : "0.78"
+         "version" : "0.79"
       },
       "Clustericious::Client::Command" : {
-         "file" : "lib/Clustericious/Client/Command.pm"
+         "file" : "lib/Clustericious/Client/Command.pm",
+         "version" : "0.79"
       },
       "Clustericious::Client::Meta" : {
-         "file" : "lib/Clustericious/Client/Meta.pm"
+         "file" : "lib/Clustericious/Client/Meta.pm",
+         "version" : "0.79"
       },
       "Clustericious::Client::Meta::Route" : {
-         "file" : "lib/Clustericious/Client/Meta/Route.pm"
+         "file" : "lib/Clustericious/Client/Meta/Route.pm",
+         "version" : "0.79"
       },
       "Clustericious::Client::Object" : {
-         "file" : "lib/Clustericious/Client/Object.pm"
+         "file" : "lib/Clustericious/Client/Object.pm",
+         "version" : "0.79"
       },
       "Clustericious::Client::Object::DateTime" : {
-         "file" : "lib/Clustericious/Client/Object/DateTime.pm"
+         "file" : "lib/Clustericious/Client/Object/DateTime.pm",
+         "version" : "0.79"
       },
       "Clustericious::Client::Object::Params" : {
-         "file" : "lib/Clustericious/Client/Object/Params.pm"
+         "file" : "lib/Clustericious/Client/Object/Params.pm",
+         "version" : "0.79"
       }
    },
    "release_status" : "stable",
-   "version" : "0.78"
+   "version" : "0.79"
 }

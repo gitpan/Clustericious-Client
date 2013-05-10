@@ -37,6 +37,8 @@ use base 'Clustericious::Client::Object';
 
 =cut
 
+our $VERSION = '0.79';
+
 sub new
 {
     my $class = shift;

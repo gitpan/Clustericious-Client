@@ -26,3 +26,4 @@ t/pod.t
 t/podcoverage.t
 dist.ini
 .travis.yml
+util/perl-reversion

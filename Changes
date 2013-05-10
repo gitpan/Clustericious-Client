@@ -1,5 +1,8 @@
 Revision history for Clustericious-Client
 
+0.80    Fri May 10 19:31:03 EDT 2013
+        Fix metadata
+
 0.79    Fri May 10 13:54:06 EDT 2013
         Add $VERSION to each module within distribution
 

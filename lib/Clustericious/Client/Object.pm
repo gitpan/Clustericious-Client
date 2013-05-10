@@ -66,7 +66,7 @@ object methods to further interact with the REST server.
 use strict; no strict 'refs';
 use warnings;
 
-our $VERSION = '0.79';
+our $VERSION = '0.80';
 
 =head1 METHODS
 

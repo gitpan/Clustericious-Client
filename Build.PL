@@ -23,4 +23,5 @@ my $build = Module::Build->new(
           'Term::Prompt'               => 0,
     },
     add_to_cleanup      => [ 'Clustericious-Client*' ],
+    meta_add => { no_index => { directory => [ 'util' ], } },
 )->create_build_script;

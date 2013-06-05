@@ -49,3 +49,6 @@
 \bClustericious-Client-[\d\.\_]+
 ^MYMETA.yml$
 ^MYMETA\.json$
+
+util/perl-reversion
+util/changes

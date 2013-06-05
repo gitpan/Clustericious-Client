@@ -11,7 +11,7 @@ install:
   - cpanm -n Term::Prompt
 before_script:
   - perl Build.PL
-script: HARNESS_IS_VERBOSE=1 prove -lvr t xt
+script: HARNESS_IS_VERBOSE=1 prove -lvr t
 perl:
   - "5.16"
   - "5.14"

@@ -2,7 +2,7 @@ package Clustericious::Client::Object::Params;
 
 =head1 NAME
 
-Clustericious::Client::Object::Params
+Clustericious::Client::Object::Params - object parameters
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ use base 'Clustericious::Client::Object';
 
 =cut
 
-our $VERSION = '0.80';
+our $VERSION = '0.81';
 
 sub new
 {

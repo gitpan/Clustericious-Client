@@ -10,7 +10,7 @@ package Clustericious::Client::Meta;
 use strict;
 use warnings;
 
-our $VERSION = '0.80';
+our $VERSION = '0.81';
 
 our %Routes; # hash from class name to array ref of routes.
 our %RouteAttributes; # hash from class name to hash ref of attributes.
@@ -143,4 +143,10 @@ sub objects {
 
 1;
 
+
+=head1 SEE ALSO
+
+L<Clustericious::Client>, L<Clustericious>
+
+=cut
 

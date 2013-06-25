@@ -37,7 +37,7 @@ use base 'Clustericious::Client::Object';
 
 =cut
 
-our $VERSION = '0.81';
+our $VERSION = '0.82';
 
 sub new
 {

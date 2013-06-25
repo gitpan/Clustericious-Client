@@ -26,7 +26,7 @@ use Data::Dumper;
 use Clustericious::Log;
 use Clustericious::Client::Meta;
 
-our $VERSION = '0.81';
+our $VERSION = '0.82';
 
 has 'client_class';
 has 'route_name';

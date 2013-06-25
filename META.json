@@ -4,7 +4,7 @@
       "Curt Tilmes <Curt.Tilmes@nasa.gov>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4003, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Module::Build version 0.4002, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "unknown"
    ],
@@ -21,7 +21,7 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "Module::Build" : "0.40"
+            "Module::Build" : "0.4"
          }
       },
       "runtime" : {
@@ -43,33 +43,42 @@
    "provides" : {
       "Clustericious::Client" : {
          "file" : "lib/Clustericious/Client.pm",
-         "version" : "0.81"
+         "version" : "0.82"
       },
       "Clustericious::Client::Command" : {
          "file" : "lib/Clustericious/Client/Command.pm",
-         "version" : "0.81"
+         "version" : "0.82"
       },
       "Clustericious::Client::Meta" : {
          "file" : "lib/Clustericious/Client/Meta.pm",
-         "version" : "0.81"
+         "version" : "0.82"
       },
       "Clustericious::Client::Meta::Route" : {
          "file" : "lib/Clustericious/Client/Meta/Route.pm",
-         "version" : "0.81"
+         "version" : "0.82"
       },
       "Clustericious::Client::Object" : {
          "file" : "lib/Clustericious/Client/Object.pm",
-         "version" : "0.81"
+         "version" : "0.82"
       },
       "Clustericious::Client::Object::DateTime" : {
          "file" : "lib/Clustericious/Client/Object/DateTime.pm",
-         "version" : "0.81"
+         "version" : "0.82"
       },
       "Clustericious::Client::Object::Params" : {
          "file" : "lib/Clustericious/Client/Object/Params.pm",
-         "version" : "0.81"
+         "version" : "0.82"
       }
    },
    "release_status" : "stable",
-   "version" : "0.81"
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/plicease/Clustericious-Client/issues"
+      },
+      "homepage" : "http://perl.wdlabs.com/Clustericious-Client",
+      "repository" : {
+         "url" : "git://github.com/plicease/Clustericious-Client.git"
+      }
+   },
+   "version" : "0.82"
 }

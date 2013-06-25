@@ -1,4 +1,5 @@
 language: perl
+
 install:
   - cpanm -n Clustericious::Config 
   - cpanm -n Clustericious::Log
@@ -9,11 +10,19 @@ install:
   - cpanm -n DateTime::Format::DateParse
   - cpanm -n Data::Rmap
   - cpanm -n Term::Prompt
+
 before_script:
   - perl Build.PL
+
 script: HARNESS_IS_VERBOSE=1 prove -lvr t
+
 perl:
   - "5.16"
   - "5.14"
   - "5.12"
   - "5.10"
+
+branches:
+  only:
+    - master
+

@@ -9,6 +9,7 @@ my $build = Module::Build->new(
     module_name => 'Clustericious::Client',
     dist_version_from => 'lib/Clustericious/Client.pm',
     dist_author => 'Curt Tilmes <Curt.Tilmes@nasa.gov>',
+    configure_requires => { 'Module::Build' => 0.40 },
     requires => {
         'Mojolicious'                  => '1.65',
           'Clustericious::Config'      => '0.01',
@@ -23,5 +24,12 @@ my $build = Module::Build->new(
           'Term::Prompt'               => 0,
     },
     add_to_cleanup      => [ 'Clustericious-Client*' ],
-    meta_add => { no_index => { directory => [ 'util' ], } },
+    meta_merge => {
+        no_index => { directory => [ 'util' ], },
+        resources => {
+            bugtracker => 'https://github.com/plicease/Clustericious-Client/issues',
+            homepage   => "http://perl.wdlabs.com/Clustericious-Client",
+            repository => 'git://github.com/plicease/Clustericious-Client.git',
+        }
+    }
 )->create_build_script;

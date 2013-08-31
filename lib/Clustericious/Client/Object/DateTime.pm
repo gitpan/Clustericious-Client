@@ -24,7 +24,7 @@ use warnings;
 
 use DateTime::Format::ISO8601;
 
-our $VERSION = '0.82';
+our $VERSION = '0.83';
 
 =head1 METHODS
 

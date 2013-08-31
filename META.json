@@ -43,31 +43,31 @@
    "provides" : {
       "Clustericious::Client" : {
          "file" : "lib/Clustericious/Client.pm",
-         "version" : "0.82"
+         "version" : "0.83"
       },
       "Clustericious::Client::Command" : {
          "file" : "lib/Clustericious/Client/Command.pm",
-         "version" : "0.82"
+         "version" : "0.83"
       },
       "Clustericious::Client::Meta" : {
          "file" : "lib/Clustericious/Client/Meta.pm",
-         "version" : "0.82"
+         "version" : "0.83"
       },
       "Clustericious::Client::Meta::Route" : {
          "file" : "lib/Clustericious/Client/Meta/Route.pm",
-         "version" : "0.82"
+         "version" : "0.83"
       },
       "Clustericious::Client::Object" : {
          "file" : "lib/Clustericious/Client/Object.pm",
-         "version" : "0.82"
+         "version" : "0.83"
       },
       "Clustericious::Client::Object::DateTime" : {
          "file" : "lib/Clustericious/Client/Object/DateTime.pm",
-         "version" : "0.82"
+         "version" : "0.83"
       },
       "Clustericious::Client::Object::Params" : {
          "file" : "lib/Clustericious/Client/Object/Params.pm",
-         "version" : "0.82"
+         "version" : "0.83"
       }
    },
    "release_status" : "stable",
@@ -80,5 +80,5 @@
          "url" : "git://github.com/plicease/Clustericious-Client.git"
       }
    },
-   "version" : "0.82"
+   "version" : "0.83"
 }

@@ -58,7 +58,7 @@ use File::Temp;
 use Clustericious::Log;
 use Clustericious::Client::Meta;
 
-our $VERSION = '0.82';
+our $VERSION = '0.83';
 
 sub _usage {
     my $class = shift;

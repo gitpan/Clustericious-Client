@@ -1,23 +1,7 @@
-=head1 NAME
-
-Clustericious::Client::Meta::Route - metadata about a route
-
-=head1 DESCRIPTION
-
-Keep track of metadata about a particular route.  This includes
-documentation and attributes.
-
-=head1 SYNOPSIS
-
-    my $meta = Clustericious::Client::Meta::Route->new(
-            client_class => 'Yars::Client',
-            route_name => 'bucket_map,
-        );
-    $meta->get('auto_failover');
-
-=cut
-
 package Clustericious::Client::Meta::Route;
+
+use strict;
+use warnings;
 use YAML::XS qw/LoadFile/;
 use DateTime::Format::DateParse;
 use Getopt::Long qw/GetOptionsFromArray/;
@@ -26,18 +10,13 @@ use Data::Dumper;
 use Clustericious::Log;
 use Clustericious::Client::Meta;
 
-our $VERSION = '0.83';
+# ABSTRACT: metadata about a route'
+our $VERSION = '0.83_01'; # VERSION
+
 
 has 'client_class';
 has 'route_name';
 
-=head2 set
-
-Set a route attribute.
-
-  $meta->set(auto_failover => 1);
-
-=cut
 
 sub set {
     my $self = shift;
@@ -45,13 +24,6 @@ sub set {
         $self->client_class, $self->route_name, @_ );
 }
 
-=head2 get
-
-Get a route attribute.
-
- $meta->get('auto_failover');
-
-=cut
 
 sub get {
     my $self = shift;
@@ -59,11 +31,6 @@ sub get {
         $self->client_class, $self->route_name, @_ );
 }
 
-=head2 doc
-
-Get documentation for this route.
-
-=cut
 
 sub doc {
     my $self = shift;
@@ -72,11 +39,6 @@ sub doc {
     );
 }
 
-=head2 set_doc
-
-Set the documentation for a route.
-
-=cut
 
 sub set_doc {
     my $self = shift;
@@ -85,37 +47,6 @@ sub set_doc {
     );
 }
 
-=head2 client_class
-
-The class of the client associated with this object.
-
-=head2 route_name
-
-The name of the route to which this object refers.
-
-=head2 process_args
-
-Process an array of arguments sent to this route.
-
-This will look at the the route_arg specification that
-has been set up for this route, and use it to turn
-an array of parameters into hash for use by the method.
-
-If any of the args have a 'preprocess' (list, yamldoc, datetime),
-then those transformations are applied.
-
-If any required parameters are missing, an exception is thrown.
-
-If any parameters have an 'alt' entry or are abbreviated, the
-full name is used instead.
-
-Returns a hash of arguments, dies on failure.
-
-See route_arg for a complete description of how arguments will
-be processed.  Note that modifies_url entries are not processed
-here; that occurs just before the request is made.
-
-=cut
 
 sub process_args {
     my $meta = shift;
@@ -232,11 +163,104 @@ sub process_args {
     return @method_args;
 }
 
+
+1;
+
+
+__END__
+=pod
+
+=head1 NAME
+
+Clustericious::Client::Meta::Route - metadata about a route'
+
+=head1 VERSION
+
+version 0.83_01
+
+=head1 SYNOPSIS
+
+    my $meta = Clustericious::Client::Meta::Route->new(
+            client_class => 'Yars::Client',
+            route_name => 'bucket_map,
+        );
+    $meta->get('auto_failover');
+
+=head2 set
+
+Set a route attribute.
+
+  $meta->set(auto_failover => 1);
+
+=head2 get
+
+Get a route attribute.
+
+ $meta->get('auto_failover');
+
+=head2 doc
+
+Get documentation for this route.
+
+=head2 set_doc
+
+Set the documentation for a route.
+
+=head2 client_class
+
+The class of the client associated with this object.
+
+=head2 route_name
+
+The name of the route to which this object refers.
+
+=head2 process_args
+
+Process an array of arguments sent to this route.
+
+This will look at the the route_arg specification that
+has been set up for this route, and use it to turn
+an array of parameters into hash for use by the method.
+
+If any of the args have a 'preprocess' (C<list>, C<yamldoc>, C<datetime>),
+then those transformations are applied.
+
+If any required parameters are missing, an exception is thrown.
+
+If any parameters have an 'alt' entry or are abbreviated, the
+full name is used instead.
+
+Returns a hash of arguments, dies on failure.
+
+See route_arg for a complete description of how arguments will
+be processed.  Note that modifies_url entries are not processed
+here; that occurs just before the request is made.
+
+=head1 DESCRIPTION
+
+Keep track of metadata about a particular route.  This includes
+documentation and attributes.
+
 =head1 SEE ALSO
 
 Clustericious::Client::Meta
 
-=cut
+=head1 AUTHOR
 
-1;
+original author: Curt Tilmes
+
+current maintainer: Graham Ollis <plicease@cpan.org>
+
+contributors:
+
+Brian Duggan
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by NASA GSFC.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
 

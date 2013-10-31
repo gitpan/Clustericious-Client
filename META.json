@@ -1,12 +1,12 @@
 {
    "abstract" : "Construct command line and perl clients for RESTful services.",
    "author" : [
-      "Curt Tilmes <Curt.Tilmes@nasa.gov>"
+      "Graham Ollis <plicease@cpan.org>"
    ],
-   "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4002, CPAN::Meta::Converter version 2.120921",
+   "dynamic_config" : 0,
+   "generated_by" : "Dist::Zilla version 4.300021, CPAN::Meta::Converter version 2.120921",
    "license" : [
-      "unknown"
+      "perl_5"
    ],
    "meta-spec" : {
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
@@ -15,13 +15,19 @@
    "name" : "Clustericious-Client",
    "no_index" : {
       "directory" : [
-         "util"
+         "share",
+         "example"
       ]
    },
    "prereqs" : {
+      "build" : {
+         "requires" : {
+            "Module::Build" : "0.3601"
+         }
+      },
       "configure" : {
          "requires" : {
-            "Module::Build" : "0.4"
+            "Module::Build" : "0.3601"
          }
       },
       "runtime" : {
@@ -29,56 +35,37 @@
             "Clustericious::Config" : "0.01",
             "Clustericious::Log" : "0",
             "Data::Rmap" : "0",
+            "Date::Parse" : "0",
+            "DateTime" : "0",
             "DateTime::Format::DateParse" : "0",
             "DateTime::Format::ISO8601" : "0",
-            "File::Temp" : "0",
             "JSON::XS" : "0",
+            "Log::Log4perl" : "0",
             "Log::Log4perl::CommandLine" : "0",
             "MojoX::Log::Log4perl" : "0",
             "Mojolicious" : "1.65",
-            "Term::Prompt" : "0"
+            "Term::Prompt" : "0",
+            "YAML::XS" : "0"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "Test::More" : "0"
          }
       }
    },
-   "provides" : {
-      "Clustericious::Client" : {
-         "file" : "lib/Clustericious/Client.pm",
-         "version" : "0.83"
-      },
-      "Clustericious::Client::Command" : {
-         "file" : "lib/Clustericious/Client/Command.pm",
-         "version" : "0.83"
-      },
-      "Clustericious::Client::Meta" : {
-         "file" : "lib/Clustericious/Client/Meta.pm",
-         "version" : "0.83"
-      },
-      "Clustericious::Client::Meta::Route" : {
-         "file" : "lib/Clustericious/Client/Meta/Route.pm",
-         "version" : "0.83"
-      },
-      "Clustericious::Client::Object" : {
-         "file" : "lib/Clustericious/Client/Object.pm",
-         "version" : "0.83"
-      },
-      "Clustericious::Client::Object::DateTime" : {
-         "file" : "lib/Clustericious/Client/Object/DateTime.pm",
-         "version" : "0.83"
-      },
-      "Clustericious::Client::Object::Params" : {
-         "file" : "lib/Clustericious/Client/Object/Params.pm",
-         "version" : "0.83"
-      }
-   },
-   "release_status" : "stable",
+   "release_status" : "testing",
    "resources" : {
       "bugtracker" : {
-         "web" : "https://github.com/plicease/Clustericious-Client/issues"
+         "web" : "https://github.com/plicease/clustericious-client/issues"
       },
-      "homepage" : "http://perl.wdlabs.com/Clustericious-Client",
+      "homepage" : "http://perl.wdlabs.com/Clustericious-Client/",
       "repository" : {
-         "url" : "git://github.com/plicease/Clustericious-Client.git"
+         "type" : "git",
+         "url" : "git://github.com/plicease/clustericious-client.git",
+         "web" : "https://github.com/plicease/clustericious-client"
       }
    },
-   "version" : "0.83"
+   "version" : "0.83_01"
 }
+

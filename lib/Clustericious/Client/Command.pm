@@ -1,52 +1,11 @@
 package Clustericious::Client::Command;
 
-=head1 NAME
-
-Clustericious::Client::Command - Command line type processing for clients.
-
-=head1 SYNOPSIS
-
-# in fooclient :
-
- use Foo::Client;
- use Clustericious::Client::Command;
-
- Clustericious::Client::Command->run(Foo::Client->new, @ARGV);
-
-Then
-
- fooclient status
- fooclient --trace root status
- fooclient version
- fooclient foobject 31
- fooclient foobject_search --color beige
-
-=head1 DESCRIPTION
-
-This will try to take command line arguments and call the right client
-methods.
-
-Calling 'fooclient bar baz' is equivalent to Foo::Client->new()->bar("baz").
-
-=head1 CAVEATS
-
-There are currently a few heuristics used when one of the arguments
-is a filename (i.e. is it a yaml file that should be parsed and send
-as a hashref, or a filename that should be PUT?  Should STDIN be
-used?).  These need to be formalized and documented.
-
-=head1 NOTES
-
-This is a beta release, the API is subject to change without notice.
-
-=head1 TODO
-
-Document and stabilize the API.
-
-=cut
-
 use strict;
 use warnings;
+
+# ABSTRACT: Command line type processing for clients.
+our $VERSION = '0.83_01'; # VERSION
+
 
 use File::Basename qw/basename/;
 use YAML::XS qw(Load Dump LoadFile);
@@ -57,8 +16,6 @@ use File::Temp;
 
 use Clustericious::Log;
 use Clustericious::Client::Meta;
-
-our $VERSION = '0.83';
 
 sub _usage {
     my $class = shift;
@@ -92,13 +49,6 @@ EOPRINT
     exit 0;
 }
 
-=head1 METHODS
-
-=head2 C<run>
-
- Clustericious::Client::Command->run(Some::Clustericious::Client->new, @ARGV);
-
-=cut
 
 our $Ssh = "ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no";
 sub _expand_remote_glob {
@@ -287,3 +237,76 @@ sub _prettyDump {
 
 
 1;
+
+__END__
+=pod
+
+=head1 NAME
+
+Clustericious::Client::Command - Command line type processing for clients.
+
+=head1 VERSION
+
+version 0.83_01
+
+=head1 SYNOPSIS
+
+# in fooclient :
+
+ use Foo::Client;
+ use Clustericious::Client::Command;
+
+ Clustericious::Client::Command->run(Foo::Client->new, @ARGV);
+
+Then
+
+ fooclient status
+ fooclient --trace root status
+ fooclient version
+ fooclient foobject 31
+ fooclient foobject_search --color beige
+
+=head1 DESCRIPTION
+
+This will try to take command line arguments and call the right client
+methods.
+
+Calling C<fooclient bar baz> is equivalent to 
+C<Foo::Client-E<gt>new()-E<gt>bar("baz")>.
+
+=head1 CAVEATS
+
+There are currently a few heuristics used when one of the arguments
+is a filename (i.e. is it a YAML file that should be parsed and send
+as a hashref, or a filename that should be PUT?  Should STDIN be
+used?).  These need to be formalized and documented.
+
+=head1 NOTES
+
+This is a beta release, the API is subject to change without notice.
+
+=head1 METHODS
+
+=head2 C<run>
+
+ Clustericious::Client::Command->run(Some::Clustericious::Client->new, @ARGV);
+
+=head1 AUTHOR
+
+original author: Curt Tilmes
+
+current maintainer: Graham Ollis <plicease@cpan.org>
+
+contributors:
+
+Brian Duggan
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by NASA GSFC.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
+

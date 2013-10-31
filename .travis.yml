@@ -1,28 +1,16 @@
-language: perl
-
-install:
-  - cpanm -n Clustericious::Config 
-  - cpanm -n Clustericious::Log
-  - cpanm -n Log::Log4perl::CommandLine
-  - cpanm -n MojoX::Log::Log4perl
-  - cpanm -n JSON::XS
-  - cpanm -n DateTime::Format::ISO8601
-  - cpanm -n DateTime::Format::DateParse
-  - cpanm -n Data::Rmap
-  - cpanm -n Term::Prompt
-
+---
 before_script:
-  - perl Build.PL
-
-script: HARNESS_IS_VERBOSE=1 prove -lvr t
-
-perl:
-  - "5.16"
-  - "5.14"
-  - "5.12"
-  - "5.10"
-
+- perl Build.PL
 branches:
   only:
-    - master
-
+  - master
+install: perl Build.PL && ./Build installdeps
+language: perl
+perl:
+- '5.19'
+- '5.18'
+- '5.16'
+- '5.14'
+- '5.12'
+- '5.10'
+script: HARNESS_IS_VERBOSE=1 prove -lvr t

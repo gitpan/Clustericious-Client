@@ -1,8 +1,107 @@
 package Clustericious::Client::Object;
 
+use strict;
+use warnings;
+
+# ABSTRACT: default object returned from client methods
+our $VERSION = '0.83_01'; # VERSION
+
+
+sub new
+{
+    my $class = shift;
+    my ($self, $client) = @_;
+
+    return $self unless ref $self;
+
+    if (ref $self eq 'ARRAY')
+    {
+        foreach (@$self)
+        {
+            $_ = $class->new($_, $client) if ref eq 'HASH';
+        }
+        return $self;
+    }
+
+    while (my ($attr, $type) = do { no strict 'refs'; each %{"${class}::classes"} })
+    {
+        eval "require $type";
+
+        if (exists $self->{$attr})
+        {
+            $self->{$attr} = $type->new($self->{$attr}, $client)
+        }
+    }
+
+    bless $self, $class;
+
+    $self->_client($client);
+
+    return $self;
+}
+
+{
+    my %clientcache;
+
+
+    sub _client
+    {
+        my $self = shift;
+        my ($client) = @_;
+        
+        $client ? ($clientcache{$self} = $client) : $clientcache{$self};
+    }
+
+    sub DESTROY
+    {
+        delete $clientcache{shift};
+    }
+}
+
+sub AUTOLOAD
+{
+    my $self = shift;
+
+    my ($class, $called) = our $AUTOLOAD =~ /^(.+)::([^:]+)$/;
+
+    my $sub = sub
+    {
+        my $self = shift;
+        my ($value) = @_;
+
+        $self->{$called} = $value if defined $value; # Can't set undef
+        
+        $value = $self->{$called};
+
+        if (ref $value eq 'HASH' or ref $value eq 'ARRAY')
+        {
+            $value = __PACKAGE__->new($value);
+        }
+
+        return wantarray && !defined($value) ? ()
+             : wantarray && (ref $value eq 'ARRAY') ? @$value
+             : wantarray && (ref $value) ? %$value
+             : $value;
+    };
+
+    do { no strict 'refs'; *{ "${class}::$called" } = $sub };
+
+    $self->$called(@_);
+}
+
+1;
+
+
+
+=pod
+
 =head1 NAME
 
 Clustericious::Client::Object - default object returned from client methods
+
+=head1 VERSION
+
+version 0.83_01
 
 =head1 SYNOPSIS
 
@@ -61,13 +160,6 @@ $obj->_client to get the original client if it was stored with new()
 (L<Clustericious::Client> does this).  This can be used by derived
 object methods to further interact with the REST server.
 
-=cut
-
-use strict; no strict 'refs';
-use warnings;
-
-our $VERSION = '0.83';
-
 =head1 METHODS
 
 =head2 C<new>
@@ -96,99 +188,12 @@ You can also include an optional 'client' parameter:
 that can be retrieved with $obj->_client().  This is useful for
 derived objects methods which need to access the Clustericious server.
 
-=cut
-
-sub new
-{
-    my $class = shift;
-    my ($self, $client) = @_;
-
-    return $self unless ref $self;
-
-    if (ref $self eq 'ARRAY')
-    {
-        foreach (@$self)
-        {
-            $_ = $class->new($_, $client) if ref eq 'HASH';
-        }
-        return $self;
-    }
-
-    while (my ($attr, $type) = each %{"${class}::classes"})
-    {
-        eval "require $type";
-
-        if (exists $self->{$attr})
-        {
-            $self->{$attr} = $type->new($self->{$attr}, $client)
-        }
-    }
-
-    bless $self, $class;
-
-    $self->_client($client);
-
-    return $self;
-}
-
-{
-    my %clientcache;
-
 =head2 C<_client>
 
 my $obj->_client->do_something();
 
 Access the stashed client.  This is useful within derived class
 methods that need to interact with the server.
-
-=cut
-
-    sub _client
-    {
-        my $self = shift;
-        my ($client) = @_;
-        
-        $client ? ($clientcache{$self} = $client) : $clientcache{$self};
-    }
-
-    sub DESTROY
-    {
-        delete $clientcache{shift};
-    }
-}
-
-sub AUTOLOAD
-{
-    my $self = shift;
-
-    my ($class, $called) = our $AUTOLOAD =~ /^(.+)::([^:]+)$/;
-
-    *{ "${class}::$called" } = sub
-    {
-        my $self = shift;
-        my ($value) = @_;
-
-        $self->{$called} = $value if defined $value; # Can't set undef
-        
-        $value = $self->{$called};
-
-        if (ref $value eq 'HASH' or ref $value eq 'ARRAY')
-        {
-            $value = __PACKAGE__->new($value);
-        }
-
-        return wantarray && !defined($value) ? ()
-             : wantarray && (ref $value eq 'ARRAY') ? @$value
-             : wantarray && (ref $value) ? %$value
-             : $value;
-    };
-
-    $self->$called(@_);
-}
-
-1;
-
-__END__
 
 =head1 SEE ALSO
 
@@ -205,3 +210,26 @@ These are also interesting:
 
  Mojo::Base
  Clustericious::Config
+
+=head1 AUTHOR
+
+original author: Curt Tilmes
+
+current maintainer: Graham Ollis <plicease@cpan.org>
+
+contributors:
+
+Brian Duggan
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by NASA GSFC.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
+
+
+__END__
+

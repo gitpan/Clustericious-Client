@@ -4,7 +4,7 @@ use strict; no strict 'refs';
 use warnings;
 
 # ABSTRACT: Construct command line and perl clients for RESTful services.
-our $VERSION = '0.83_01'; # VERSION
+our $VERSION = '0.84'; # VERSION
 
 
 use Mojo::Base qw/-base/;
@@ -564,7 +564,7 @@ Clustericious::Client - Construct command line and perl clients for RESTful serv
 
 =head1 VERSION
 
-version 0.83_01
+version 0.84
 
 =head1 SYNOPSIS
 

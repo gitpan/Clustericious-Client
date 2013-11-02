@@ -37,4 +37,4 @@ resources:
   bugtracker: https://github.com/plicease/clustericious-client/issues
   homepage: http://perl.wdlabs.com/Clustericious-Client/
   repository: git://github.com/plicease/clustericious-client.git
-version: 0.83_01
+version: 0.84

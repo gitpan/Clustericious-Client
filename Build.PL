@@ -7,6 +7,7 @@ use Module::Build 0.3601;
 
 my %module_build_args = (
   "build_requires" => {
+    "Log::Log4perl::CommandLine" => 0,
     "Module::Build" => "0.3601",
     "Test::More" => 0
   },
@@ -18,10 +19,12 @@ my %module_build_args = (
     "Graham Ollis <plicease\@cpan.org>"
   ],
   "dist_name" => "Clustericious-Client",
-  "dist_version" => "0.84",
+  "dist_version" => "0.85",
   "license" => "perl",
   "module_name" => "Clustericious::Client",
-  "recommends" => {},
+  "recommends" => {
+    "EV" => 0
+  },
   "recursive_test_files" => 1,
   "requires" => {
     "Clustericious::Config" => "0.01",

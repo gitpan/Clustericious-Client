@@ -17,6 +17,7 @@ lib/Clustericious/Client/Meta/Route.pm
 lib/Clustericious/Client/Object.pm
 lib/Clustericious/Client/Object/DateTime.pm
 lib/Clustericious/Client/Object/Params.pm
+t/00_diag.pl
 t/00_diag.t
 t/00_diag.txt
 t/args.t

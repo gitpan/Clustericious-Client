@@ -1,5 +1,8 @@
 Revision history for Clustericious-Client
 
+0.85      2013-11-05 10:43:41 America/New_York
+  - more diagnostics for automated testing
+
 0.84      2013-11-02 19:04:47 America/New_York
   - promote to production
 

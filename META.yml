@@ -3,6 +3,7 @@ abstract: 'Construct command line and perl clients for RESTful services.'
 author:
   - 'Graham Ollis <plicease@cpan.org>'
 build_requires:
+  Log::Log4perl::CommandLine: 0
   Module::Build: 0.3601
   Test::More: 0
 configure_requires:
@@ -18,6 +19,8 @@ no_index:
   directory:
     - share
     - example
+recommends:
+  EV: 0
 requires:
   Clustericious::Config: 0.01
   Clustericious::Log: 0
@@ -37,4 +40,4 @@ resources:
   bugtracker: https://github.com/plicease/clustericious-client/issues
   homepage: http://perl.wdlabs.com/Clustericious-Client/
   repository: git://github.com/plicease/clustericious-client.git
-version: 0.84
+version: 0.85
